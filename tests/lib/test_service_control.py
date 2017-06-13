@@ -1,11 +1,11 @@
 import mock
 
-from chroma_common.lib import util
-from chroma_common.lib.service_control import ServiceControl
-from chroma_common.lib.service_control import ServiceControlEL6
-from chroma_common.lib.service_control import ServiceControlEL7
-from chroma_common.test.command_capture_testcase import CommandCaptureTestCase
-from chroma_common.test.command_capture_testcase import CommandCaptureCommand
+from iml_common.lib import util
+from iml_common.lib.service_control import ServiceControl
+from iml_common.lib.service_control import ServiceControlEL6
+from iml_common.lib.service_control import ServiceControlEL7
+from iml_common.test.command_capture_testcase import CommandCaptureTestCase
+from iml_common.test.command_capture_testcase import CommandCaptureCommand
 
 
 class TestServiceStateEL6(CommandCaptureTestCase):

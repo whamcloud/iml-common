@@ -1,4 +1,4 @@
-""" Data for use in chroma_common unit tests, mostly example commandline stdout """
+""" Data for use in iml_common unit tests, mostly example commandline stdout """
 
 # example commandline stdout from command of the format:
 # >> zfs get -Hp -o property,value all <zfs dataset path e.g. pool1/MGS>

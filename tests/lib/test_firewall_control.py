@@ -2,11 +2,11 @@ import tempfile
 import mock
 import abc
 
-from chroma_common.lib import util
-from chroma_common.lib.firewall_control import FirewallControl
-from chroma_common.lib.firewall_control import FirewallControlEL6
-from chroma_common.test.command_capture_testcase import CommandCaptureTestCase
-from chroma_common.test.command_capture_testcase import CommandCaptureCommand
+from iml_common.lib import util
+from iml_common.lib.firewall_control import FirewallControl
+from iml_common.lib.firewall_control import FirewallControlEL6
+from iml_common.test.command_capture_testcase import CommandCaptureTestCase
+from iml_common.test.command_capture_testcase import CommandCaptureCommand
 
 
 class BaseTestFC:

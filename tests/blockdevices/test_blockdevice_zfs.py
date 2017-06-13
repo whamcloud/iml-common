@@ -2,10 +2,10 @@ import glob
 import mock
 
 from os import path
-from chroma_common.blockdevices.blockdevice_zfs import BlockDeviceZfs
+from iml_common.blockdevices.blockdevice_zfs import BlockDeviceZfs
 from tests.blockdevices.blockdevice_base_tests import BaseTestBD
 from tests.data import example_data
-from chroma_common.test.command_capture_testcase import CommandCaptureCommand
+from iml_common.test.command_capture_testcase import CommandCaptureCommand
 
 
 class TestBlockDeviceZFS(BaseTestBD.BaseTestBlockDevice):

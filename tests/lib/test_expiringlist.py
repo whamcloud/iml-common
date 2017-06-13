@@ -1,6 +1,6 @@
 from mock import patch
-from chroma_common.lib.util import ExpiringList
-from chroma_common.test.iml_unit_testcase import ImlUnitTestCase
+from iml_common.lib.util import ExpiringList
+from iml_common.test.iml_unit_testcase import ImlUnitTestCase
 
 
 class TestExpiringList(ImlUnitTestCase):

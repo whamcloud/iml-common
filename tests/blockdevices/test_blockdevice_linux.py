@@ -1,8 +1,8 @@
 import mock
 
-from chroma_common.blockdevices.blockdevice_linux import BlockDeviceLinux
+from iml_common.blockdevices.blockdevice_linux import BlockDeviceLinux
 from tests.blockdevices.blockdevice_base_tests import BaseTestBD
-from chroma_common.test.command_capture_testcase import CommandCaptureCommand
+from iml_common.test.command_capture_testcase import CommandCaptureCommand
 
 
 class TestBlockDeviceLinux(BaseTestBD.BaseTestBlockDevice):

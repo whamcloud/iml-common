@@ -5,12 +5,12 @@
 
 
 from setuptools import setup, find_packages
-from chroma_common import package_version
+from iml_common import package_version
 
 excludes = ["*tests*"]
 
 setup(
-    name = 'chroma-common',
+    name = 'iml-common',
     version = package_version(),
     packages = find_packages(exclude=excludes),
     include_package_data = True,

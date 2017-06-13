@@ -6,7 +6,7 @@
 import mock
 import errno
 
-from chroma_common.lib.shell import Shell
+from iml_common.lib.shell import Shell
 from iml_unit_testcase import ImlUnitTestCase
 
 
@@ -32,7 +32,7 @@ class CommandCaptureTestCase(ImlUnitTestCase):
         self._missing_command_err_msg = 'Command attempted "%s" was unknown to CommandCaptureTestCase, did you intend this?'
 
         assert 'fake' not in str(Shell.run)
-        mock.patch('chroma_common.lib.shell.BaseShell.run', self._fake_run).start()
+        mock.patch('iml_common.lib.shell.BaseShell.run', self._fake_run).start()
 
     def _fake_run(self, arg_list, logger=None, monitor_func=None, timeout=Shell.SHELLTIMEOUT):
         assert type(arg_list) in [list, str, unicode], 'arg list must be list or str :%s' % type(arg_list)

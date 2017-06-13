@@ -150,15 +150,15 @@ class BaseShell(object):
 
         return None
 
-# By default Shell is this BaseShell class, and other chroma_common modules use BaseShell via Shell by default.
+# By default Shell is this BaseShell class, and other iml_common modules use BaseShell via Shell by default.
 # However consumers (namely the agent today) may change Shell to reference their own SubClass version and this will
-# mean that chroma_common consumers of Shell use the SubClass rather than the base.
+# mean that iml_common consumers of Shell use the SubClass rather than the base.
 Shell = BaseShell
 
 
 def set_shell(new_shell_class):
     """
-    Change the Shell the chroma_common (and any other referencers of Shell in this module) use for Shell commands
+    Change the Shell the iml_common (and any other referencers of Shell in this module) use for Shell commands
     :param new_shell_class: The new Shell classs to use
     """
     global Shell

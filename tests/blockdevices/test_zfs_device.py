@@ -3,10 +3,10 @@ import threading
 import mock
 from collections import defaultdict
 
-from chroma_common.test.command_capture_testcase import CommandCaptureCommand, CommandCaptureTestCase
-from chroma_common.blockdevices.blockdevice_zfs import ZfsDevice
-from chroma_common.lib.util import ExceptionThrowingThread
-from chroma_common.lib.shell import BaseShell
+from iml_common.test.command_capture_testcase import CommandCaptureCommand, CommandCaptureTestCase
+from iml_common.blockdevices.blockdevice_zfs import ZfsDevice
+from iml_common.lib.util import ExceptionThrowingThread
+from iml_common.lib.shell import BaseShell
 
 
 class TestZfsDevice(CommandCaptureTestCase):
@@ -227,7 +227,7 @@ class TestZfsDevice(CommandCaptureTestCase):
                                                 executions_remaining=1))
         self._add_export_commands()
 
-        mock.patch('chroma_common.blockdevices.blockdevice_zfs.time.sleep').start()
+        mock.patch('iml_common.blockdevices.blockdevice_zfs.time.sleep').start()
 
         exported_zfs_device = ZfsDevice(self.zpool_name, True)
 
@@ -243,7 +243,7 @@ class TestZfsDevice(CommandCaptureTestCase):
                                                 stderr="cannot export '%s': pool is busy" % self.zpool_name))
         self._add_export_commands()
 
-        mock.patch('chroma_common.blockdevices.blockdevice_zfs.time.sleep').start()
+        mock.patch('iml_common.blockdevices.blockdevice_zfs.time.sleep').start()
 
         exported_zfs_device = ZfsDevice(self.zpool_name, True)
 

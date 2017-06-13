@@ -1,8 +1,8 @@
 import mock
 
-from chroma_common.filesystems.filesystem_zfs import FileSystemZfs
-from chroma_common.blockdevices.blockdevice_zfs import BlockDeviceZfs
-from chroma_common.test.command_capture_testcase import CommandCaptureTestCase, CommandCaptureCommand
+from iml_common.filesystems.filesystem_zfs import FileSystemZfs
+from iml_common.blockdevices.blockdevice_zfs import BlockDeviceZfs
+from iml_common.test.command_capture_testcase import CommandCaptureTestCase, CommandCaptureCommand
 
 
 class TestFileSystemZFS(CommandCaptureTestCase):
