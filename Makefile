@@ -1,4 +1,15 @@
-include ../include/Makefile.version
+space :=
+space +=
+SCM_COMMIT_NUMBER	:= $(shell git rev-list HEAD | wc -l)
+PRODUCT_NAME		:= Intel Manager for Lustre
+SHORT_PRODUCT_NAME	:= iml
+
+# Stable variable names exported to packaging and code
+BUILD_NUMBER		:= $(SCM_COMMIT_NUMBER)
+VERSION	            := $(BUILD_NUMBER)
+PACKAGE_VERSION		:= 1
+PACKAGE_RELEASE     := 1
+IS_RELEASE          := True
 
 ARCH := $(shell echo $$(uname -m))
 
@@ -26,13 +37,13 @@ rpms: cleandist tarball
 	mkdir -p _topdir/{BUILD,S{PEC,OURCE,RPM}S,RPMS/$(ARCH)}
 	cp dist/iml-common-$(PACKAGE_VERSION).tar.gz _topdir/SOURCES
 	cp iml-common.spec _topdir/SPECS
-	dist=$$(rpm --eval %dist);                             \
-	dist=$${dist/.centos/};                                \
-	rpmbuild --define "_topdir $$(pwd)/_topdir" 		   \
-		--define "version $(PACKAGE_VERSION)" 		  \
-		--define "package_release $(PACKAGE_RELEASE)" \
-		--define "%dist $$dist"                       \
-		-bb _topdir/SPECS/iml-common.spec
+	dist=$$(rpm --eval %dist);                        \
+	dist=$${dist/.centos/};                           \
+	rpmbuild --define "_topdir $$(pwd)/_topdir"       \
+	    --define "version $(PACKAGE_VERSION)"         \
+	    --define "package_release $(PACKAGE_RELEASE)" \
+	    --define "%dist $$dist"                       \
+	    -bb _topdir/SPECS/iml-common.spec
 	mv _topdir/RPMS/$(ARCH)/iml-common-*$(PACKAGE_VERSION)-$(PACKAGE_RELEASE)$$(rpm --eval %{dist} | sed -e 's/\(\.el[0-9][0-9]*\)\.centos/\1/').$(ARCH).rpm dist/
 	rm -rf _topdir
 
