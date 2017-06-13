@@ -13,13 +13,15 @@ from collections import MutableSequence
 import sys
 
 
-def running_nose_tests():
+def running_isolated_tests():
     """
-    Return true if the current application is running nosetests
+    Return true if the current application is running unit or module tests which require OS/platform mocking
 
     A bit of a smorgasbord of tests to discover, but at least only one smorgasbord
     """
     return ('nosetests' in sys.argv[0]) or \
+           ('py.test' in sys.argv[0]) or \
+           ('pytest' in sys.argv[0]) or \
            ('manage.py' in sys.argv[0] and 'test' in sys.argv[1]) or \
            ('behave' in sys.argv[0])
 
@@ -28,9 +30,7 @@ ExpiringValue = namedtuple('ExpiringValue', ['value', 'expiry'])
 
 
 class ExpiringList(MutableSequence):
-    """Special implementation of a python list which invalidate its elements after a specified
-    'grace_period'
-    """
+    """ Special implementation of a python list which invalidate its elements after a specified 'grace_period' """
 
     def __init__(self, grace_period):
         self._container = list()
@@ -150,19 +150,19 @@ PlatformInfo = namedtuple('PlatformInfo', ['system',
 usage should be much easier to fathom. Caches the value for speed which presumes
 the contents are constant for a given execution.
 
-For a Mac it pretends to be Centos 6.7.
+For a Mac it pretends to be Centos 7.2.
 
 :return: PlatformInfo named tuple
 """
-if running_nose_tests():
+if running_isolated_tests():
     # default platform_info attributes for agent unit tests (el6)
     platform_info = PlatformInfo('Linux',
                                  'CentOS',
-                                 6.7,
-                                 '6.7.1552',
-                                 2.6,
-                                 6,
-                                 '2.6.32-504.12.2.el6.x86_64')
+                                 '7.2',
+                                 '7.2.1551',
+                                 2.7,
+                                 7,
+                                 '3.10.0-327.36.3.el7.x86_64')
 elif platform.system() == 'Linux':
     platform_info = PlatformInfo(platform.system(),
                                  platform.linux_distribution()[0],
@@ -175,12 +175,12 @@ elif platform.system() == 'Linux':
 elif platform.system() == 'Darwin':
     platform_info = PlatformInfo('Linux',
                                  'CentOS',
-                                 6.7,
-                                 '6.7',
+                                 '7.2',
+                                 '7.2.1551',
                                  float("%s.%s" % (platform.python_version_tuple()[0],
                                                   platform.python_version_tuple()[1])),
                                  int(platform.python_version_tuple()[2]),
-                                 '2.6.32-504.12.2.el6.x86_64')
+                                 '3.10.0-327.36.3.el7.x86_64')
 else:
     raise RuntimeError('Unknown system type %s' % platform.system())
 
