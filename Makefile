@@ -1,5 +1,3 @@
-space :=
-space +=
 SCM_COMMIT_NUMBER	:= $(shell git rev-list HEAD | wc -l)
 PRODUCT_NAME		:= Intel Manager for Lustre
 SHORT_PRODUCT_NAME	:= iml

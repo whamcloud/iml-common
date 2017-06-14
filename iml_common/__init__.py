@@ -10,10 +10,8 @@ try:
     __build__ = BUILD
     __is_release__ = IS_RELEASE
 except ImportError:
-    # These are defaults, should loosely track latest dev tag, won't
-    # work with packaging but will allow non-packaged installs to work
-    # OK.
-    __version__ = '1.99.0.0-dev'
+    # These are defaults, will initialise variables before make is run
+    __version__ = '0.0.0.0-dev'
     __package_version__ = __version__
     __build__ = 1
     __is_release__ = False

@@ -3,12 +3,12 @@
 %{?!package_release: %define package_release 1}
 %{?!python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; import sys; sys.stdout.write(get_python_lib())")}
 
-Summary: Chroma Common
+Summary: IML Common
 Name: %{name}
 Version: %{version}
 Release: %{package_release}%{?dist}
 Source0: %{name}-%{version}.tar.gz
-License: Proprietary
+License: MIT
 Group: Development/Libraries
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Prefix: %{_prefix}
@@ -18,7 +18,7 @@ Vendor: Intel(R) Corporation
 Common library containing routines used by both agent and manager.
 
 %package test
-Summary: Common test utilities for Intel Manager for Lustre tests
+Summary: Common test utilities used by Intel Manager for Lustre tests
 Group: Development
 Requires: %{name} = %{version}-%{release}
 %description test
@@ -35,12 +35,6 @@ rm -rf %{buildroot}
 %{__python} setup.py install --skip-build --install-lib=%{python_sitelib} --root=%{buildroot}
 mkdir -p $RPM_BUILD_ROOT/usr/sbin/
 
-touch test.files
-for test_file in $(find -L $RPM_BUILD_ROOT%{python_sitelib}/iml_common/test/ -type f -name '*.py*'); do
-  install_file=${test_file/$RPM_BUILD_ROOT\///}
-  echo "${install_file}" >> test.files
-done
-
 %clean
 rm -rf %{buildroot}
 
@@ -48,5 +42,5 @@ rm -rf %{buildroot}
 %exclude %{python_sitelib}/iml_common/test
 %{python_sitelib}/*
 
-%files -f test.files test
-%defattr(-,root,root)
+%files test
+%{python_sitelib}/iml_common/test

@@ -14,9 +14,8 @@ setup(
     version = package_version(),
     packages = find_packages(exclude=excludes),
     include_package_data = True,
-    author = "Intel(R) Corporation",
-    author_email = "hpdd-info@intel.com",
-    url = 'http://lustre.intel.com/',
+    author = 'Intel(R) Corporation',
+    author_email = 'tom.nabarro@intel.com',
+    url = 'https://github.com/intel-hpdd/iml-common',
     description = 'Common library used by both agent and manager',
-    long_description = open('README.txt').read()
 )
