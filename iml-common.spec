@@ -1,4 +1,4 @@
-%{!?name: %define name iml-common}
+%{?!name: %define name iml-common}
 %{?!version: %define version %(%{__python} -c "from iml_common import version; sys.stdout.write(version())")}
 %{?!package_release: %define package_release 1}
 %{?!python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; import sys; sys.stdout.write(get_python_lib())")}
