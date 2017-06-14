@@ -1,10 +1,10 @@
 language: python
-python: "2.7"
+python: '2.7'
 script: py.test
 deploy:
-    provider: pypi
-    user: tanabarr
-    password:
-        secure: ...
-    on:
-        tags: true
+  provider: pypi
+  user: iml
+  password:
+    secure: i6pg6TmaFfNfXnOfElePFjNE+QtWeZBnMr6nQeCKOLomYVfOnAKG0gPGyyu0vmudrbrlAFVuQhO9gN7aq7203FlDzIDFr7KNYUPtCHcUuGf4vnixe9UNlGvi++ivzdKrn2BAdjrn7VA/+jxaivK5pQqaSODmzyLTwPS5ytGTD66ir4zrZCM2WNv0sBEObM9xqTfkZT/HjUdxfjb6Gg8y+M8TZ5C+9By9vcpxyD5VjMT4qNZA08oxCDzrql2SGAKsPtxhNYfSclFYtHCM36s6vUb0qtkUNhEbHzvudcy8P+koJFQvtvUVUA2GJtENqY4CCQEbdKm3EtZOSVdXZpON3I9hkvfiFDapepRo9Qb9F++YJZGndMQGEZZ7bgwJazqOfQntMyawfzE1MwITXjux8WhxeMTXhD8Y0MksGLhL3R3hTeKZSI5v/c2ArmQvDM5es4dKuGV3n2q9KnKXSpGMKXLDsvLzfLFKZLTtcH7h4ZnNLfdqA14MY/kxEzOJgFN1WUK/ZS6ehOutCY/xgZlGIXZ/85s3OTfymvESGppYasvK8BT6fkVgL/XaTQ8PNWCg3TdmwHWL4crgAYbwgSW4YOcY1GFJWWozbp2fKYPC8xl/XLdzoiWlALs0UDH0YWN702h7ZByJ1jaNN7v7TCmXF4Oc0+A3/gmXbLXgL/yGcjI=
+  on:
+    tags: true
