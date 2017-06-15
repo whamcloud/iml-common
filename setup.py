@@ -5,7 +5,6 @@
 
 
 from setuptools import setup, find_packages
-# from distutils.core import setup, find_packages
 # To use a consistent encoding
 from codecs import open
 from os import path
@@ -24,10 +23,9 @@ setup(
     license='MIT',
     packages=find_packages(exclude=excludes),
     include_package_data=True,
-    author='Intel(R) Corporation',
-    author_email='tom.nabarro@intel.com',
+    author='IML Team',
     url='https://pypi.python.org/pypi/iml-common',
-    description='Common library used by multiple IML component',
+    description='Common library used by multiple IML components',
     long_description=long_description,
     classifiers=[
         'Development Status :: 5 - Production/Stable',
