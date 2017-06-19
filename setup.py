@@ -5,13 +5,12 @@
 
 
 from setuptools import setup, find_packages
-from iml_common import package_version
 
 excludes = ["*tests*"]
 
 setup(
     name = 'iml-common',
-    version = package_version(),
+    version = '1.0.0',
     packages = find_packages(exclude=excludes),
     include_package_data = True,
     author = 'Intel(R) Corporation',
