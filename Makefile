@@ -1,6 +1,6 @@
 SCM_COMMIT_NUMBER	:= $(shell git rev-list HEAD | wc -l)
 PRODUCT_NAME		:= Intel Manager for Lustre
-SHORT_PRODUCT_NAME	:= iml
+SHORT_PRODUCT_NAME	:= IML
 
 # Stable variable names exported to packaging and code
 BUILD_NUMBER		:= $(SCM_COMMIT_NUMBER)

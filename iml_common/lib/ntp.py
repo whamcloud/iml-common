@@ -56,23 +56,23 @@ class NTPConfig(object):
             return None
 
         found = None
-        # verify this config file has iml custom edits
+        # verify this config file has IML custom edits
         for line in lines:
             try:
                 found = next(mark for mark in markers if line.find(mark) >= 0)
-                # we have found an iml edit in configurations file
+                # we have found an IML edit in configurations file
                 break
             except StopIteration:
                 pass
         if not found:
-            # no iml edits found
+            # no IML edits found
             return None
 
-        # find first server directive in iml-modified file
+        # find first server directive in IML-modified file
         try:
             server = next(line.split()[1] for line in lines if line.startswith('server '))
         except StopIteration:
-            self._log('no configured server found in iml-modified ntp config file', level='debug')
+            self._log('no configured server found in IML-modified ntp config file', level='debug')
             return None
         if server == '127.127.1.0':
             # ntp configured to use local clock
