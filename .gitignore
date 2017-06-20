@@ -3,3 +3,5 @@
 *.py[co]
 *.swp
 *.swo
+*.log
+.DS_Store
