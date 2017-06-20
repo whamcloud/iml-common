@@ -19,8 +19,9 @@ excludes = ["*tests*"]
 setup(
     name='iml-common',
     use_scm_version=True,
+    skip_upload_docs=True,
     setup_requires=['setuptools_scm'],
-    licence='MIT',
+    license='MIT',
     packages=find_packages(exclude=excludes),
     include_package_data=True,
     author='Intel(R) Corporation',
