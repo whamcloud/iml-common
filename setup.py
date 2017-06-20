@@ -5,16 +5,36 @@
 
 
 from setuptools import setup, find_packages
+# To use a consistent encoding
+from codecs import open
+from os import path
+
+here = path.abspath(path.dirname(__file__))
+
+with open(path.join(here, 'DESCRIPTION.rst'), encoding='utf-8') as f:
+    long_description = f.read()
 
 excludes = ["*tests*"]
 
 setup(
-    name = 'iml-common',
-    version = '1.0.0',
-    packages = find_packages(exclude=excludes),
-    include_package_data = True,
-    author = 'Intel(R) Corporation',
-    author_email = 'tom.nabarro@intel.com',
-    url = 'https://github.com/intel-hpdd/iml-common',
-    description = 'Common library used by both agent and manager',
+    name='iml-common',
+    use_scm_version=True,
+    setup_requires=['setuptools_scm'],
+    licence='MIT',
+    packages=find_packages(exclude=excludes),
+    include_package_data=True,
+    author='Intel(R) Corporation',
+    author_email='tom.nabarro@intel.com',
+    url='https://github.com/intel-hpdd/iml-common',
+    description='Common library used by multiple IML component',
+    long_description=long_description,
+    classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'Intended Audience :: Lustre administrators',
+        'Topic :: Software Development :: Integrated Management Tools',
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
+    ],
+    keywords='IML lustre high-availability',
 )

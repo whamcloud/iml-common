@@ -1,5 +1,10 @@
 language: python
-python:
-    - "2.7"
-script:
-    - py.test
+python: "2.7"
+script: py.test
+deploy:
+    provider: pypi
+    user: tanabarr
+    password:
+        secure: ...
+    on:
+        tags: true
