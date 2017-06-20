@@ -3,10 +3,3 @@
 *.py[co]
 *.swp
 *.swo
-*.log
-*.pid
-scm_version.py*
-.DS_Store
-dist/
-*.egg-info/
-tags
