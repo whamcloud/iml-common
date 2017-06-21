@@ -3,6 +3,7 @@ python: '2.7'
 script: py.test
 deploy:
   provider: pypi
+  edge: true
   skip_upload_docs: true
   user: iml
   password: CYhGmkCTMzPsdhdzfu8YAEDC
