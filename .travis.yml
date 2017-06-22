@@ -1,6 +1,11 @@
 language: python
 python: '2.7'
-script: py.test
+before_script:
+  - pip install codecov
+script:
+  - py.test --cov=iml_common
+after_success:
+  - codecov
 deploy:
   provider: pypi
   skip_upload_docs: true
