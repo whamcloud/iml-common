@@ -1,5 +1,9 @@
 language: python
 python:
-    - "2.7"
+  - "2.7"
+before_script:
+  - pip install codecov
 script:
-    - py.test
+  - py.test --cov=iml_common
+after_success:
+  - codecov
