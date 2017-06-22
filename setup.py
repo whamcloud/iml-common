@@ -5,6 +5,7 @@
 
 
 from setuptools import setup, find_packages
+# from distutils.core import setup, find_packages
 # To use a consistent encoding
 from codecs import open
 from os import path
@@ -25,13 +26,11 @@ setup(
     include_package_data=True,
     author='Intel(R) Corporation',
     author_email='tom.nabarro@intel.com',
-    url='https://github.com/intel-hpdd/iml-common',
+    url='https://pypi.python.org/pypi/iml-common',
     description='Common library used by multiple IML component',
     long_description=long_description,
     classifiers=[
         'Development Status :: 5 - Production/Stable',
-        'Intended Audience :: Lustre administrators',
-        'Topic :: Software Development :: Integrated Management Tools',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
