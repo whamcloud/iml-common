@@ -13,7 +13,7 @@ from iml_common.blockdevices.blockdevice_zfs import ZfsDevice
 from iml_common.lib.util import ExceptionThrowingThread
 from iml_common.lib.shell import BaseShell
 
-TEST_ZPOOL_LOCK_DIR = '/tmp/chroma-agent-test-locks'
+TEST_ZPOOL_LOCK_DIR = '/tmp/iml-common-test-locks'
 TEST_LOCK_ACQUIRE_TIMEOUT = 1
 
 

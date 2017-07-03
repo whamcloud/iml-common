@@ -15,6 +15,7 @@ from blockdevice import BlockDevice
 from ..lib.util import pid_exists
 
 try:
+    # FIXME: this should be avoided, implicit knowledge of something outside the package
     from chroma_agent.log import daemon_log as log
 except ImportError:
     log = logging.getLogger(__name__)
@@ -49,7 +50,7 @@ class ZfsDevice(object):
     operate on the device as if it was locally active.
     """
 
-    ZPOOL_LOCK_DIR = '/var/lib/chroma/zfs_locks'
+    ZPOOL_LOCK_DIR = '/var/lib/iml-common/zfs_locks'
     LOCK_ACQUIRE_TIMEOUT = 10
 
     lock_refcount = defaultdict(int)
