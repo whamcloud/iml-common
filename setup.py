@@ -18,8 +18,7 @@ excludes = ["*tests*"]
 
 setup(
     name='iml-common',
-    use_scm_version=True,
-    setup_requires=['setuptools_scm'],
+    version='v1.0.3-6-gba6b698',
     license='MIT',
     packages=find_packages(exclude=excludes),
     include_package_data=True,

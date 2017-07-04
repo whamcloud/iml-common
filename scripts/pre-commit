@@ -111,6 +111,29 @@ def check_files(files, check):
     return result
 
 
+def apply_version():
+    print('Applying version string in setup.py')
+
+    p = subprocess.Popen(['git', 'describe', '--tags', '--match', 'v[0-9]*'], stdout=subprocess.PIPE)
+    out, err = p.communicate()
+    rc = p.wait()
+    if rc != 0:
+        raise RuntimeError("Cannot invoke git %s" % out)
+    tag = out.strip()
+
+    p = subprocess.Popen(['sed', '-i', "s/version=.*,/version='%s',/" % tag, 'setup.py'], stdout=subprocess.PIPE)
+    out, err = p.communicate()
+    rc = p.wait()
+    if rc != 0:
+        raise RuntimeError("Cannot invoke sed %s" % out)
+
+    p = subprocess.Popen(['git', 'add', 'setup.py'], stdout=subprocess.PIPE)
+    out, err = p.communicate()
+    rc = p.wait()
+    if rc != 0:
+        raise RuntimeError("Cannot invoke git %s" % out)
+
+
 def main(all_files, exclude=None):
     if not exclude:
         exclude = []
@@ -143,7 +166,10 @@ def main(all_files, exclude=None):
     for check in CHECKS:
         result = check_files(files, check) or result
 
-    sys.exit(result)
+    if files:
+        apply_version()
+
+    exit(result)
 
 
 if __name__ == '__main__':
