@@ -13,6 +13,7 @@ from collections import namedtuple
 from collections import MutableSequence
 import sys
 import signal
+import traceback
 
 
 def running_isolated_tests():
@@ -62,9 +63,12 @@ class ExpiringList(MutableSequence):
 
 # When running unit tests every test is within a transaction and so if you kick of another thread you will not see
 # any of the database changes that have occurred. Threads will be enabled by default but manager unit tests must
-# explicitly set _use_threads_default to False to avoid database related failures. Agent unit tests should always
-# run threads on the agent because the agent doesn't use the db.
-_use_threads_default = True
+# explicitly set _use_threads_default to False to avoid database related failures. All other unit tests should
+# run threads because they don't use the manager db.
+# TODO: could the logic below be simplified to set _use_threads_default to False if string found in stack regardless
+stack = traceback.format_list(traceback.extract_stack())
+_use_threads_default = not (running_isolated_tests() and (any('manager/tests/unit' in line for line in stack) or
+                                                          ('behave' in sys.argv[0])))
 
 
 class ExceptionThrowingThread(threading.Thread):
