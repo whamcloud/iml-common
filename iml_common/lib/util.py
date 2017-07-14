@@ -11,21 +11,7 @@ import threading
 import platform
 from collections import namedtuple
 from collections import MutableSequence
-import sys
 import signal
-
-
-def running_isolated_tests():
-    """
-    Return true if the current application is running unit or module tests which require OS/platform mocking
-
-    A bit of a smorgasbord of tests to discover, but at least only one smorgasbord
-    """
-    return ('nosetests' in sys.argv[0]) or \
-           ('py.test' in sys.argv[0]) or \
-           ('pytest' in sys.argv[0]) or \
-           ('manage.py' in sys.argv[0] and 'test' in sys.argv[1]) or \
-           ('behave' in sys.argv[0])
 
 
 ExpiringValue = namedtuple('ExpiringValue', ['value', 'expiry'])
@@ -60,17 +46,15 @@ class ExpiringList(MutableSequence):
         self._container.insert(index, ExpiringValue(value, time.time() + self.grace_period))
 
 
-# When running unit tests every test is within a transaction and so if you kick of another thread you will not see
-# any of the database changes that have occurred. Threads will be enabled by default but manager unit tests must
-# explicitly set _use_threads_default to False to avoid database related failures. Agent unit tests should always
-# run threads on the agent because the agent doesn't use the db.
-_use_threads_default = True
-
-
 class ExceptionThrowingThread(threading.Thread):
     def __init__(self, *args, **kwargs):
-        # Sometimes not threading helps with debug.
-        self._use_threads = kwargs.pop('use_threads', _use_threads_default)
+        value = os.environ.get('IML_DISABLE_THREADS', '0')
+        # Sometimes not threading helps with debug, disabled by setting IML_DISABLE_THREADS=1
+        try:
+            self._use_threads = kwargs.pop('use_threads',
+                                           True if not value else not bool(int(value)))
+        except ValueError:
+            self._use_threads = True
 
         if self._use_threads:
             super(ExceptionThrowingThread, self).__init__(*args, **kwargs)
@@ -156,16 +140,7 @@ For a Mac it pretends to be Centos 7.2.
 
 :return: PlatformInfo named tuple
 """
-if running_isolated_tests():
-    # default platform_info attributes for agent unit tests (el6)
-    platform_info = PlatformInfo('Linux',
-                                 'CentOS',
-                                 '7.2',
-                                 '7.2.1551',
-                                 2.7,
-                                 7,
-                                 '3.10.0-327.36.3.el7.x86_64')
-elif platform.system() == 'Linux':
+if platform.system() == 'Linux' and platform.linux_distribution()[0] == 'CentOS':
     platform_info = PlatformInfo(platform.system(),
                                  platform.linux_distribution()[0],
                                  float('.'.join(platform.linux_distribution()[1].split('.')[:2])),
@@ -174,7 +149,7 @@ elif platform.system() == 'Linux':
                                                   platform.python_version_tuple()[1])),
                                  int(platform.python_version_tuple()[2]),
                                  platform.release())
-elif platform.system() == 'Darwin':
+elif platform.system() == 'Darwin' or platform.system() == 'Linux':
     platform_info = PlatformInfo('Linux',
                                  'CentOS',
                                  '7.2',

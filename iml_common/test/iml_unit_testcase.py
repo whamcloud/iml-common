@@ -10,4 +10,6 @@ from django.utils import unittest
 
 class ImlUnitTestCase(unittest.TestCase):
     def setUp(self):
+        super(ImlUnitTestCase, self).setUp()
+
         self.addCleanup(mock.patch.stopall)

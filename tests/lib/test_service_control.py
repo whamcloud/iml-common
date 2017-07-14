@@ -303,7 +303,7 @@ class TestServiceStateEL7(CommandCaptureTestCase):
         mock.patch.object(util, 'platform_info', util.PlatformInfo('Linux',
                                                                    'CentOS',
                                                                    0.0,
-                                                                   '7.2',
+                                                                   '7.3',
                                                                    0.0,
                                                                    0,
                                                                    '')).start()
