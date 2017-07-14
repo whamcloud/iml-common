@@ -300,6 +300,14 @@ class TestServiceStateEL7(CommandCaptureTestCase):
     def setUp(self):
         super(TestServiceStateEL7, self).setUp()
 
+        mock.patch.object(util, 'platform_info', util.PlatformInfo('Linux',
+                                                                   'CentOS',
+                                                                   0.0,
+                                                                   '7.3',
+                                                                   0.0,
+                                                                   0,
+                                                                   '')).start()
+
         self.test = ServiceControl.create('test_service')
         self.assertEqual(type(self.test), ServiceControlEL7)
 

@@ -140,7 +140,7 @@ For a Mac it pretends to be Centos 7.2.
 
 :return: PlatformInfo named tuple
 """
-if platform.system() == 'Linux':
+if platform.system() == 'Linux' and platform.linux_distribution()[0] == 'CentOS':
     platform_info = PlatformInfo(platform.system(),
                                  platform.linux_distribution()[0],
                                  float('.'.join(platform.linux_distribution()[1].split('.')[:2])),
@@ -149,7 +149,7 @@ if platform.system() == 'Linux':
                                                   platform.python_version_tuple()[1])),
                                  int(platform.python_version_tuple()[2]),
                                  platform.release())
-elif platform.system() == 'Darwin':
+elif platform.system() == 'Darwin' or platform.system() == 'Linux':
     platform_info = PlatformInfo('Linux',
                                  'CentOS',
                                  '7.2',

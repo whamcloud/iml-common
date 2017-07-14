@@ -6,17 +6,10 @@
 import mock
 
 from django.utils import unittest
-from iml_common.lib import util
 
 
 class ImlUnitTestCase(unittest.TestCase):
     def setUp(self):
-        mock.patch.object(util, 'platform_info', util.PlatformInfo('Linux',
-                                                                   'CentOS',
-                                                                   '7.2',
-                                                                   '7.2.1551',
-                                                                   2.7,
-                                                                   7,
-                                                                   '3.10.0-327.36.3.el7.x86_64')).start()
+        super(ImlUnitTestCase, self).setUp()
 
         self.addCleanup(mock.patch.stopall)
