@@ -1,8 +1,6 @@
 language: python
 python: '2.7'
-script: py.test --cov=./iml_common
-cache: false
-after_success: codecov
+script: py.test
 deploy:
   provider: pypi
   skip_upload_docs: true
