@@ -10,10 +10,6 @@ def target_func():
 
 class PreservePermissionTestCase(ImlUnitTestCase):
 
-    def setUp(self):
-        super(PreservePermissionTestCase, self).setUp()
-        environ.pop('IML_DISABLE_THREADS', None)
-
     def test_file(self):
         for filename, st_mode, st_uid, st_gid in [('sidney', 493, 2, 10),
                                                   ('denver', 362, 4, 7),
@@ -35,6 +31,17 @@ class PreservePermissionTestCase(ImlUnitTestCase):
             mock_os_chmod.assert_called_with(filename, magic_stat_mock.st_mode)
             self.assertEqual(mock_os_chown.call_count, 1)
             mock_os_chown.assert_called_with(filename, magic_stat_mock.st_uid, magic_stat_mock.st_gid)
+
+
+class DisableThreadsTestCase(ImlUnitTestCase):
+
+    def setUp(self):
+        super(DisableThreadsTestCase, self).setUp()
+        environ.pop('IML_DISABLE_THREADS', None)
+
+    def tearDown(self):
+        environ.pop('IML_DISABLE_THREADS', None)
+        super(DisableThreadsTestCase, self).tearDown()
 
     def test_threads_on(self):
         thread = util.ExceptionThrowingThread(target=target_func, args=())
