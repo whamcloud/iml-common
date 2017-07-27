@@ -50,7 +50,7 @@ class ZfsDevice(object):
     operate on the device as if it was locally active.
     """
 
-    ZPOOL_LOCK_DIR = '/var/lib/iml-common/zfs_locks'
+    ZPOOL_LOCK_DIR = '/var/lib/iml/zfs_locks'
     LOCK_ACQUIRE_TIMEOUT = 10
 
     lock_refcount = defaultdict(int)
@@ -121,7 +121,7 @@ class ZfsDevice(object):
         if ZfsDevice.locks_dir_initialized is False:
             # ensure lock directory exists
             try:
-                os.mkdir(self.ZPOOL_LOCK_DIR)
+                os.makedirs(self.ZPOOL_LOCK_DIR)
             except OSError:
                 pass
 
@@ -503,6 +503,12 @@ class BlockDeviceZfs(BlockDevice):
         :return: None on success, error message on failure
         """
         error = None
+
+        # ensure lock directory exists
+        try:
+            os.makedirs(ZfsDevice.ZPOOL_LOCK_DIR)
+        except OSError:
+            pass
 
         if managed_mode is False:
             return error
