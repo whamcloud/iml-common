@@ -264,7 +264,7 @@ class TestZfsDeviceLockFile(TestZfsDevice):
         self.thread_running = False
 
         shutil.rmtree(ZfsDevice.ZPOOL_LOCK_DIR, ignore_errors=True)
-        os.mkdir(ZfsDevice.ZPOOL_LOCK_DIR)
+        os.makedirs(ZfsDevice.ZPOOL_LOCK_DIR)
 
     def tearDown(self):
         shutil.rmtree(ZfsDevice.ZPOOL_LOCK_DIR, ignore_errors=True)
@@ -415,15 +415,15 @@ class TestZfsDeviceLockFile(TestZfsDevice):
         ZfsDevice.locks_dir_initialized = False
         zfs_device = ZfsDevice(self.zpool_name, False)
 
-        mock_mkdir = mock.Mock()
-        with mock.patch('os.mkdir', mock_mkdir):
+        mock_makedirs = mock.Mock()
+        with mock.patch('os.makedirs', mock_makedirs):
             zfs_device.lock_pool()
 
-            mock_mkdir.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
-            mock_mkdir.reset_mock()
+            mock_makedirs.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
+            mock_makedirs.reset_mock()
 
             zfs_device.lock_pool()
 
-            mock_mkdir.assert_not_called()
+            mock_makedirs.assert_not_called()
 
         ZfsDevice.locks_dir_initialized = False
