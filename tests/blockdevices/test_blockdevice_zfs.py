@@ -86,7 +86,6 @@ kernel modules are functioning properly.
         self.assertRanAllCommandsInOrder()
 
     def test_filesystem_type_unoccupied(self):
-        # this should be called with device_path referencing a zpool
         self.add_command(('zfs', 'list', '-H', '-o', 'name', '-r', self.blockdevice._device_path),
                          stdout=self.blockdevice._device_path)
 
@@ -94,7 +93,6 @@ kernel modules are functioning properly.
         self.assertRanAllCommandsInOrder()
 
     def test_filesystem_type_occupied(self):
-        # this should be called with device_path referencing a zpool
         self.add_command(('zfs', 'list', '-H', '-o', 'name', '-r', self.blockdevice._device_path),
                          stdout='%(pool)s\n%(pool)s/dataset_1' % {'pool': self.blockdevice._device_path})
 
@@ -102,7 +100,6 @@ kernel modules are functioning properly.
         self.assertRanAllCommandsInOrder()
 
     def test_filesystem_info_unoccupied(self):
-        # this should be called with device_path referencing a zpool
         self.add_command(('zfs', 'list', '-H', '-o', 'name', '-r', self.blockdevice._device_path),
                          stdout=self.blockdevice._device_path)
 
@@ -110,7 +107,6 @@ kernel modules are functioning properly.
         self.assertRanAllCommandsInOrder()
 
     def test_filesystem_info_occupied(self):
-        # this should be called with device_path referencing a zpool
         self.add_command(('zfs', 'list', '-H', '-o', 'name', '-r', self.blockdevice._device_path),
                          stdout='%(pool)s\n%(pool)s/dataset_1' % {'pool': self.blockdevice._device_path})
 
@@ -119,13 +115,35 @@ kernel modules are functioning properly.
         self.assertRanAllCommandsInOrder()
 
     def test_filesystem_info_occupied_multiple(self):
-        # this should be called with device_path referencing a zpool
         self.add_command(('zfs', 'list', '-H', '-o', 'name', '-r', self.blockdevice._device_path),
                          stdout='%(pool)s\n%(pool)s/dataset_1\n%(pool)s/dataset_2' % {'pool':
                                                                                       self.blockdevice._device_path})
 
         self.assertEqual("Datasets 'dataset_1,dataset_2' found on zpool '%s'" %
                          self.blockdevice._device_path, self.blockdevice.filesystem_info)
+        self.assertRanAllCommandsInOrder()
+
+    def test_filesystem_info_dataset(self):
+        # should be possible with device_path referencing a dataset
+        dataset_blockdevice = BlockDeviceZfs('zfs', self.dataset_path)
+
+        self.add_command(('zfs', 'list', '-H', '-o', 'name', '-r', self.blockdevice._device_path),
+                         stdout='%(pool)s\n%(pool)s/dataset_1\n%(pool)s/dataset_2' % {'pool':
+                                                                                      self.blockdevice._device_path})
+
+        self.assertEqual("Datasets 'dataset_1,dataset_2' found on zpool '%s'" %
+                         self.blockdevice._device_path, dataset_blockdevice.filesystem_info)
+        self.assertRanAllCommandsInOrder()
+
+    def test_filesystem_type_dataset(self):
+        # should be possible with device_path referencing a dataset
+        dataset_blockdevice = BlockDeviceZfs('zfs', self.dataset_path)
+
+        self.add_command(('zfs', 'list', '-H', '-o', 'name', '-r', self.blockdevice._device_path),
+                         stdout='%(pool)s\n%(pool)s/dataset_1\n%(pool)s/dataset_2' % {'pool':
+                                                                                      self.blockdevice._device_path})
+
+        self.assertEqual('zfs', dataset_blockdevice.filesystem_type)
         self.assertRanAllCommandsInOrder()
 
     def test_uuid(self):
