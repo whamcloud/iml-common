@@ -76,18 +76,45 @@ class FileSystem(object):
 
     def mount(self, mount_point):
         """ :return: Mount the file system, raise an exception on error. """
+
+        def ssh_mgs(cmd):
+            import os
+            myname = os.uname()[1]
+            dot_in_myname = myname.find('.')
+            if dot_in_myname > -1:
+                myname = myname[0:dot_in_myname]
+            mgs = myname[:-1] + "5"
+            shell.Shell.try_run(['ssh', mgs, cmd])
+
+        def create_lustre_debug_logs(operation=""):
+            if operation:
+                operation = "-%s" % operation
+            shell.Shell.try_run(['lctl dk >/var/tmp/debug%s-$(date +%s).log' % operation], shell=True)
+            ssh_mgs('lctl dk >/var/tmp/debug%s-$(date +%s).log' % operation)
+
         self._initialize_modules()
 
-        result = shell.Shell.run(['mount', '-t', 'lustre', self._device_path, mount_point])
+        # debug LU-9838/#235
+        shell.Shell.try_run(['lctl', 'set_param', 'debug=-1'])
+        shell.Shell.try_run(['lctl', 'set_param', 'debug_mb=200'])
+
+        result = shell.Shell.run(["mount", "-t", "lustre", self._device_path, mount_point])
 
         if result.rc == self.RC_MOUNT_INPUT_OUTPUT_ERROR or \
            result.rc == self.RC_MOUNT_ESHUTDOWN_ERROR:
+            # debug LU-9838/#235
+            create_lustre_debug_logs(operation="first_mount_attempt")
             # HYD-1040, LU-9838: Sometimes we should retry on a failed registration
             result = shell.Shell.run(['mount', '-t', 'lustre', self._device_path, mount_point])
 
-        if result.rc != self.RC_MOUNT_SUCCESS:
-            raise RuntimeError("Error (%s) mounting '%s': '%s' '%s'" % (result.rc, mount_point, result.stdout, result.stderr))
+        # test LU-9799
+        if result.stderr.startswith("e2label: No such file or directory while trying to open"):
+            raise RuntimeError("rc=%s, LU-9799 while mounting '%s': '%s' '%s'" % (result.rc, mount_point, result.stdout, result.stderr))
 
+        if result.rc != self.RC_MOUNT_SUCCESS:
+            # debug LU-9838/#235
+            create_lustre_debug_logs(operation="final_mount")
+            raise RuntimeError("Error (%s) mounting '%s': '%s' '%s'" % (result.rc, mount_point, result.stdout, result.stderr))
 
     def umount(self):
         """ :return: Umount the file system, raise an exception on error. """
