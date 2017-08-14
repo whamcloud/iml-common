@@ -5,6 +5,11 @@ RPM_RPMSDIR   := $(shell rpm --eval %_rpmdir)
 
 rpm: $(RPM_RPMSDIR)/noarch/python2-iml-common-$(VERSION)-1.el7.centos.noarch.rpm
 
+srpm: python-iml-common-$(VERSION)-1.el7.centos.src.rpm
+
+python-iml-common-$(VERSION)-1.el7.centos.src.rpm: iml-common-$(VERSION).spec
+	rpmbuild -bs --define %_srcrpmdir\ $$PWD --define %_sourcedir\ dist $<
+
 spec: iml-common-$(VERSION).spec
 
 dist: dist/iml-common-$(VERSION).tar.gz
