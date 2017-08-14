@@ -34,7 +34,7 @@ class CommandCaptureTestCase(ImlUnitTestCase):
         assert 'fake' not in str(Shell.run)
         mock.patch('iml_common.lib.shell.BaseShell.run', self._fake_run).start()
 
-    def _fake_run(self, arg_list, logger=None, monitor_func=None, timeout=Shell.SHELLTIMEOUT):
+    def _fake_run(self, arg_list, logger=None, monitor_func=None, timeout=Shell.SHELLTIMEOUT, shell=False):
         assert type(arg_list) in [list, str, unicode], 'arg list must be list or str :%s' % type(arg_list)
 
         # Allow simple commands to just be presented as a string. However do not start formatting the string this
