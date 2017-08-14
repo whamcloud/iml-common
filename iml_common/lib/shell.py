@@ -43,7 +43,7 @@ class BaseShell(object):
     RunResult = collections.namedtuple("RunResult", ['rc', 'stdout', 'stderr', 'timeout'])
 
     @classmethod
-    def _run(cls, arg_list, logger, monitor_func, timeout):
+    def _run(cls, arg_list, logger, monitor_func, timeout, shell=False):
         """Separate the bare inner of running a command, so that tests can
         stub this function while retaining the related behaviour of run()
         """
@@ -64,7 +64,8 @@ class BaseShell(object):
             p = subprocess.Popen(arg_list,
                                  stdout=stdout_fd,
                                  stderr=stderr_fd,
-                                 close_fds=True)
+                                 close_fds=True,
+                                 shell=shell)
 
             # Rather than using p.wait(), we do a slightly more involved poll/backoff, in order
             # to poll the thread_state.teardown event as well as the completion of the subprocess.
@@ -103,7 +104,7 @@ class BaseShell(object):
             stderr_fd.close()
 
     @classmethod
-    def run(cls, arg_list, logger=None, monitor_func=None, timeout=SHELLTIMEOUT):
+    def run(cls, arg_list, logger=None, monitor_func=None, timeout=SHELLTIMEOUT, shell=False):
         """Run a subprocess, and return a tuple of rc, stdout, stderr.
         Record subprocesses run and their results in log.
 
@@ -118,17 +119,17 @@ class BaseShell(object):
 
         os.environ["TERM"] = ""
 
-        result = cls._run(arg_list, logger, monitor_func, timeout)
+        result = cls._run(arg_list, logger, monitor_func, timeout, shell=shell)
 
         return result
 
     @classmethod
-    def try_run(cls, arg_list, logger=None, monitor_func=None, timeout=SHELLTIMEOUT):
+    def try_run(cls, arg_list, logger=None, monitor_func=None, timeout=SHELLTIMEOUT, shell=False):
         """Run a subprocess, and raise an exception if it returns nonzero.  Return
         stdout string.
         """
 
-        result = cls.run(arg_list, logger, monitor_func, timeout)
+        result = cls.run(arg_list, logger, monitor_func, timeout, shell=shell)
 
         if result.rc != 0:
             raise cls.CommandExecutionError(result, arg_list)
