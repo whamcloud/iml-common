@@ -51,13 +51,19 @@ class FileSystemLdiskfs(FileSystem, BlockDeviceLinux):
     def mount(self, mount_point):
         self._initialize_modules()
 
+        # debug LU-9838
+        shell.Shell.try_run(['lctl', 'set_param', ',debug=-1'])
+        shell.Shell.try_run(['lctl', 'set_param', ',debug_mb=200'])
+
         result = shell.Shell.run(['mount', '-t', 'lustre', self._device_path, mount_point])
 
-        if result.rc == self.RC_MOUNT_INPUT_OUTPUT_ERROR:
-            # HYD-1040: Sometimes we should retry on a failed registration
-            result = shell.Shell.run(['mount', '-t', 'lustre', self._device_path, mount_point])
+        #if result.rc == self.RC_MOUNT_INPUT_OUTPUT_ERROR:
+        #    # HYD-1040: Sometimes we should retry on a failed registration
+        #    result = shell.Shell.run(['mount', '-t', 'lustre', self._device_path, mount_point])
 
         if result.rc != self.RC_MOUNT_SUCCESS:
+            # debug LU-9838
+            shell.Shell.try_run(['lctl dk >/var/tmp/debug.log'], shell=True)
             raise RuntimeError("Error (%s) mounting '%s': '%s' '%s'" % (result.rc, mount_point, result.stdout, result.stderr))
 
     # A curiosity with lustre on ldiskfs is that the umount must be on the 'realpath' not the path that was mkfs'd/mounted

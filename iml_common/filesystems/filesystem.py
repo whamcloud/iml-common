@@ -74,6 +74,10 @@ class FileSystem(object):
         """ :return: Mount the file system, raise an exception on error. """
         self._initialize_modules()
 
+        # debug LU-9838
+        shell.Shell.try_run(['lctl', 'set_param', ',debug=-1'])
+        shell.Shell.try_run(['lctl', 'set_param', ',debug_mb=200'])
+
         return shell.Shell.try_run(["mount", "-t", "lustre", "%s" % self._device_path, mount_point])
 
     def umount(self):
