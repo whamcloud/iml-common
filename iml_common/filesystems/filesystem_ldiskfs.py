@@ -16,9 +16,6 @@ class FileSystemLdiskfs(FileSystem, BlockDeviceLinux):
     # in the read from blkid. But listing both is safe.
     _supported_filesystems = ['ldiskfs', 'ext4']
 
-    RC_MOUNT_SUCCESS = 0
-    RC_MOUNT_INPUT_OUTPUT_ERROR = 5
-
     def __init__(self, fstype, device_path):
         super(FileSystemLdiskfs, self).__init__(fstype, device_path)
 
@@ -47,18 +44,6 @@ class FileSystemLdiskfs(FileSystem, BlockDeviceLinux):
         dumpe2fs_output = shell.Shell.try_run(["dumpe2fs", "-h", self._device_path])
 
         return int(re.search("Inode count:\\s*(\\d+)$", dumpe2fs_output, re.MULTILINE).group(1))
-
-    def mount(self, mount_point):
-        self._initialize_modules()
-
-        result = shell.Shell.run(['mount', '-t', 'lustre', self._device_path, mount_point])
-
-        if result.rc == self.RC_MOUNT_INPUT_OUTPUT_ERROR:
-            # HYD-1040: Sometimes we should retry on a failed registration
-            result = shell.Shell.run(['mount', '-t', 'lustre', self._device_path, mount_point])
-
-        if result.rc != self.RC_MOUNT_SUCCESS:
-            raise RuntimeError("Error (%s) mounting '%s': '%s' '%s'" % (result.rc, mount_point, result.stdout, result.stderr))
 
     # A curiosity with lustre on ldiskfs is that the umount must be on the 'realpath' not the path that was mkfs'd/mounted
     def umount(self):

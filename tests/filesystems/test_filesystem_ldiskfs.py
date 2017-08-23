@@ -34,9 +34,9 @@ class TestFileSystemLdiskfs(CommandCaptureTestCase):
 
         self.assertRanAllCommandsInOrder()
 
-    def test_mount_fail_initial(self):
+    def _mount_fail_initial(self, fail_code):
         """ Test when initial mount fails, retry succeeds and result returned """
-        self.add_commands(CommandCaptureCommand(('mount', '-t', 'lustre', '/dev/sda1', '/mnt/OST0000'), rc=5,
+        self.add_commands(CommandCaptureCommand(('mount', '-t', 'lustre', '/dev/sda1', '/mnt/OST0000'), rc=fail_code,
                                                 executions_remaining=1),
                           CommandCaptureCommand(('mount', '-t', 'lustre', '/dev/sda1', '/mnt/OST0000'), rc=0,
                                                 executions_remaining=1))
@@ -44,6 +44,12 @@ class TestFileSystemLdiskfs(CommandCaptureTestCase):
         self.filesystem.mount('/mnt/OST0000')
 
         self.assertRanAllCommandsInOrder()
+
+    def test_mount_fail_initial_5(self):
+        self._mount_fail_initial(5)
+
+    def test_mount_fail_initial_108(self):
+        self._mount_fail_initial(108)
 
     def test_mount_different_rc_fail_initial(self):
         """ Test when initial mount fails and the rc doesn't cause a retry, exception is raised """
