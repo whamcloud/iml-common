@@ -87,7 +87,7 @@ class ZfsDevice(object):
 
             if self.pool_path not in imported_pools:
                 try:
-                    result = self.import_(True, True)
+                    result = self.import_(True)
                     self.pool_imported = (result is None)
                 except:
                     self.unlock_pool()
@@ -155,7 +155,7 @@ class ZfsDevice(object):
         if self.lock_refcount[self.lock_unique_id] == 0:
             self.lock.release()
 
-    def import_(self, force, readonly):
+    def import_(self, readonly):
         """
         This must be called when doing an import as it will lock the device before doing imports and ensure there is
         no confusion about whether a device is import or not.
@@ -166,7 +166,6 @@ class ZfsDevice(object):
 
         try:
             return shell.Shell.run_canned_error_message(['zpool', 'import'] +
-                                                        (['-f'] if force else []) +
                                                         (['-N', '-o', 'readonly=on', '-o', 'cachefile=none'] if readonly else []) +
                                                         [self.pool_path])
         finally:
@@ -342,7 +341,7 @@ class BlockDeviceZfs(BlockDevice):
 
                 for line in ls.split("\n"):
                     try:
-                        key, value = line.split('\t')
+                        key, value = line.split()
                         self._zfs_properties[key] = value
                     except ValueError:                              # Be resilient to things we don't understand.
                         if log:
@@ -372,7 +371,7 @@ class BlockDeviceZfs(BlockDevice):
 
                 for line in ls.strip().split("\n"):
                     try:
-                        _, key, value, _ = line.split('\t')
+                        _, key, value, _ = line.split()
                         self._zpool_properties[key] = value
                     except ValueError:                              # Be resilient to things we don't understand.
                         if log:
@@ -446,7 +445,7 @@ class BlockDeviceZfs(BlockDevice):
             return blockdevice.import_(pacemaker_ha_operation)
 
         with ZfsDevice(self._device_path, False) as zfs_device:
-            result = zfs_device.import_(pacemaker_ha_operation, False)
+            result = zfs_device.import_(False)
 
             if result is not None and 'a pool with that name already exists' in result:
 
