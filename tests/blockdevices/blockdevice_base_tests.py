@@ -65,17 +65,8 @@ class BaseTestBD(object):
         def test_property_values(self):
             pass
 
-        def test_import_success_non_pacemaker(self):
+        def test_import_success(self):
             self.assertIsNone(self.blockdevice.import_(False))
-
-        def test_import_success_with_pacemaker(self):
-            self.assertIsNone(self.blockdevice.import_(True))
-
-        def test_import_existing_non_pacemaker(self):
-            self.assertIsNone(self.blockdevice.import_(False))
-
-        def test_import_existing_with_pacemaker(self):
-            self.assertIsNone(self.blockdevice.import_(True))
 
         def test_export_success(self):
             self.assertIsNone(self.blockdevice.export())

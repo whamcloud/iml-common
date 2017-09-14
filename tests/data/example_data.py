@@ -112,6 +112,49 @@ Journal features:         journal_incompat_revoke
 Journal size:             8M
 Journal length:           8192
 Journal sequence:         0x00000365
-Journal start:            1
+Journal start:            1"""
 
-"""
+# example commandline stdout from command of the format:
+# >> zpool get -Hp all <zpool name>
+zpool_example_properties = """bob     size    10670309376     -
+bob     capacity        0       -
+bob     altroot -       default
+bob     health  ONLINE  -
+bob     guid    14447627934634597108    -
+bob     version -       default
+bob     bootfs  -       default
+bob     delegation      on      default
+bob     autoreplace     off     default
+bob     cachefile       -       default
+bob     failmode        panic   local
+bob     listsnapshots   off     default
+bob     autoexpand      off     default
+bob     dedupditto      0       default
+bob     dedupratio      1.00    -
+bob     free    10670149632     -
+bob     allocated       159744  -
+bob     readonly        off     -
+bob     ashift  0       default
+bob     comment -       default
+bob     expandsize      -       -
+bob     freeing 0       -
+bob     fragmentation   0       -
+bob     leaked  0       -
+bob     multihost       on      local
+bob     feature@async_destroy   enabled local
+bob     feature@empty_bpobj     active  local
+bob     feature@lz4_compress    active  local
+bob     feature@multi_vdev_crash_dump   enabled local
+bob     feature@spacemap_histogram      active  local
+bob     feature@enabled_txg     active  local
+bob     feature@hole_birth      active  local
+bob     feature@extensible_dataset      active  local
+bob     feature@embedded_data   active  local
+bob     feature@bookmarks       enabled local
+bob     feature@filesystem_limits       enabled local
+bob     feature@large_blocks    enabled local
+bob     feature@large_dnode     enabled local
+bob     feature@sha512  enabled local
+bob     feature@skein   enabled local
+bob     feature@edonr   enabled local
+bob     feature@userobj_accounting      active  local"""
