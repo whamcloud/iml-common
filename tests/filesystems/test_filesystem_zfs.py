@@ -1,7 +1,7 @@
 import mock
 
 from iml_common.filesystems.filesystem_zfs import FileSystemZfs
-from iml_common.blockdevices.blockdevice_zfs import BlockDeviceZfs
+from iml_common.blockdevices.blockdevice_zfs import BlockDeviceZfs, ZfsDevice
 from iml_common.test.command_capture_testcase import CommandCaptureTestCase, CommandCaptureCommand
 
 
@@ -10,10 +10,12 @@ class TestFileSystemZFS(CommandCaptureTestCase):
         super(TestFileSystemZFS, self).setUp()
 
         self.uuid_prop_mock = mock.PropertyMock(return_value='123456789123')
-        mock.patch.object(BlockDeviceZfs, 'uuid', self.uuid_prop_mock).start()
+        self.uuid_patcher = mock.patch.object(BlockDeviceZfs, 'uuid', self.uuid_prop_mock)
+        self.uuid_patcher.start()
 
         self.type_prop_mock = mock.PropertyMock(return_value='zfs')
-        mock.patch.object(BlockDeviceZfs, 'filesystem_type', self.type_prop_mock).start()
+        self.type_patcher = mock.patch.object(BlockDeviceZfs, 'filesystem_type', self.type_prop_mock)
+        self.type_patcher.start()
 
         mock.patch('iml_common.blockdevices.blockdevice_zfs.ZfsDevice.lock_pool').start()
         mock.patch('iml_common.blockdevices.blockdevice_zfs.ZfsDevice.unlock_pool').start()
@@ -29,10 +31,19 @@ class TestFileSystemZFS(CommandCaptureTestCase):
         self.assertEqual([], self.filesystem.mkfs_options(None))
 
     def test_devices_match(self):
+        self.uuid_patcher.stop()
+        self.type_patcher.stop()
+        mock_zfs_device = mock.MagicMock(autospec=ZfsDevice)
+        mock_zfs_device.available.return_value = True
+        mock_ZfsDevice = mock.Mock(return_value=mock_zfs_device)
+        mock.patch('iml_common.blockdevices.blockdevice_zfs.ZfsDevice', mock_ZfsDevice).start()
+
+        self.add_commands(CommandCaptureCommand(('zfs', 'get', '-H', '-o', 'value', 'guid', 'zpool1'),
+                                                stdout='123456789123\n'))
+
         self.assertTrue(self.filesystem.devices_match('zpool1', 'zpool1', '123456789123'))
 
-        self.uuid_prop_mock.assert_called_once()
-        self.type_prop_mock.assert_called_once()
+        self.assertRanAllCommandsInOrder()
 
     def test_mkfs_no_options(self):
         """
