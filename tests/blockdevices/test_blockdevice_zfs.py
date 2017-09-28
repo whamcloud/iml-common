@@ -386,8 +386,6 @@ kernel modules are functioning properly.
         self.assertRanAllCommandsInOrder()
 
     def _base_terminate_driver_test(self, getpid_retval, listdir_retval, lockfilepid_retval):
-        # mock_remove = mock.Mock()
-        # mock.patch('os.remove', mock_remove).start()
         mock_getpid = mock.Mock(return_value=getpid_retval)
         mock.patch('os.getpid', mock_getpid).start()
         mock_listdir = mock.Mock(return_value=listdir_retval)
