@@ -507,6 +507,12 @@ class BlockDeviceZfs(BlockDevice):
         except OSError:
             pass
 
+        # remove json store for zfs objects
+        try:
+            os.remove('/tmp/store.json')
+        except OSError:
+            pass
+
         if managed_mode is False:
             return error
 
@@ -572,6 +578,12 @@ class BlockDeviceZfs(BlockDevice):
         Iterate through existing lockfiles and for each check if pid written into lock is THIS process' pid and
         if so, remove lockfile. If no pid written into lockfile, ignore (linklockfiles).
         """
+        # remove json store for zfs objects
+        try:
+            os.remove('/tmp/store.json')
+        except OSError:
+            pass
+
         lockfile_paths = [os.path.join(ZfsDevice.ZPOOL_LOCK_DIR, name) for name in os.listdir(ZfsDevice.ZPOOL_LOCK_DIR)]
 
         def validate_or_remove(path):
