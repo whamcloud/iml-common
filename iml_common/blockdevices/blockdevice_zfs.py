@@ -1,6 +1,7 @@
 # Copyright (c) 2017 Intel Corporation. All rights reserved.
 # Use of this source code is governed by a MIT-style
 # license that can be found in the LICENSE file.
+import glob
 
 import os
 import errno
@@ -10,9 +11,11 @@ import logging
 
 from collections import defaultdict
 from lockfile import LockFile, LockTimeout
-from ..lib import shell
+from toolz import compose
+
+from ..lib.shell import Shell
 from blockdevice import BlockDevice
-from ..lib.util import pid_exists
+from ..lib.util import pid_exists, clean_list, human_to_bytes
 
 try:
     # FIXME: this should be avoided, implicit knowledge of something outside the package
@@ -25,6 +28,157 @@ except ImportError:
         handler.setFormatter(logging.Formatter("[%(asctime)s: %(levelname)s/%(name)s] %(message)s"))
         log.addHandler(handler)
         log.setLevel(logging.DEBUG)
+
+
+ZFS_OBJECT_STORE_PATH = '/var/lib/iml/zfs_store.json'
+
+
+def _match_entry(x, name, exclude):
+    """ identify config devices in any line listed in config not containing vdev keyword """
+    return not any(substring in x for substring in (exclude + (name,)))
+
+
+def _parse_line(xs):
+    """ keywords in vdev config display for zpool that represent structure not an actual device """
+    excluded = ('mirror', 'raidz', 'spare', 'cache', 'logs', 'NAME')
+    # pair up keys with values found on the subsequent line
+    zpool = dict(zip(xs[::2], xs[1::2]))
+    zpool[u'devices'] = filter(lambda x: _match_entry(x, zpool['pool'], excluded),
+                               clean_list(zpool['config'].split('\n')))
+
+    def kv_split(words):
+        return {words[0]: (words[1] if len(words) > 1 else None)}
+
+    zpool[u'devices'] = reduce(lambda d, x: d.update(kv_split(x.split())) or d,
+                               zpool['devices'],
+                               {})
+
+    del (zpool['config'])
+    return zpool
+
+
+def get_zpools(active=True):
+    """
+    Parse shell output from 'zpool import' or 'zpool status' commands and return zpool details in list of dicts.
+    Command issued depends on both input arguments and is either of the form:
+    # [root@lotus-33vm17 ~]# zpool import
+    #    pool: lustre
+    #      id: 5856902799170956568
+    #   state: ONLINE
+    #  action: The pool can be imported using its name or numeric identifier.
+    #  config:
+    #
+    #  lustre  ONLINE
+    #    sda  ONLINE
+    #    sdb  ONLINE
+    #
+    #  ... (repeats for all discovered zpools)
+    or:
+    # [root@lotus-32vm5 ~]# zpool status
+    #   pool: pool1
+    #  state: ONLINE
+    #   scan: none requested
+    # config:
+    #
+    #         NAME   STATE     READ WRITE CKSUM
+    #         pool1  ONLINE       0     0     0
+    #           sdb  ONLINE       0     0     0
+    #
+    # errors: No known data errors
+    #
+    #  ... (repeats for all discovered zpools)
+    :active: if True return details of imported zpools 'zpool status', otherwise return details of zpools
+      available for import 'zpool import'
+    :return: list of dicts with details of either imported or importable zpools
+    """
+    cmd_args = ['zpool', 'status' if (active is True) else 'import']
+    out = Shell.try_run(cmd_args)
+
+    if 'pool: ' not in out:
+        return {}
+
+    transform_pools = compose(_parse_line,
+                              lambda x: clean_list(re.split('(\w+):[^/]', x)),
+                              lambda x: 'pool: ' + x)
+
+    return map(transform_pools, clean_list(re.split('pool:\s+', out)))
+
+
+def get_zpool_datasets(pool_name, drives):
+    """ Retrieve datasets belonging to a zpool """
+    out = Shell.try_run(['zfs', 'list', '-H', '-o', 'name,avail,guid'])
+
+    zpool_datasets = {}
+
+    if out.strip() != "no datasets available":
+        for line in filter(None, out.split('\n')):
+            name, size_str, uuid = line.split()
+            size = human_to_bytes(size_str)
+
+            if name.startswith("%s/" % pool_name):
+                # This will need discussion, but for now fabricate a major:minor. Do we ever use them as numbers?
+                major_minor = "zfsset:%s" % uuid
+
+                zpool_datasets[uuid] = {
+                    "name": name,
+                    "path": name,
+                    "block_device": major_minor,
+                    "uuid": uuid,
+                    "size": size,
+                    "drives": drives
+                }
+                log.debug("zfs mount '%s'" % name)
+
+    return zpool_datasets
+
+
+def get_zpool_zvols(pool_name, drives, block_devices):
+    """
+    Each zfs pool may have zvol entries in it. This will parse those zvols and create
+    device entries for them
+    """
+    zpool_vols = {}
+
+    for zvol_path in glob.glob("/dev/%s/*" % pool_name):
+        major_minor = block_devices.path_to_major_minor(zvol_path)
+
+        if major_minor is None:
+            continue
+
+        uuid = zvol_path
+        zpool_vols[uuid] = {
+            "name": zvol_path,
+            "path": zvol_path,
+            "block_device": major_minor,
+            "uuid": uuid,
+            "size": block_devices.block_device_nodes[major_minor]["size"],
+            "drives": drives
+        }
+
+    return zpool_vols
+
+
+def list_zpool_devices(name, full_paths):
+    """
+    We are parsing either full vdev paths (including partitions):
+
+    [root@node1 ~]# zpool list -PHv -o name lustre1
+    lustre1
+      /dev/disk/by-path/pci-0000:00:05.0-scsi-0:0:0:2-part1 9.94G 228K 9.94G - 0% 0%
+    Or base devices:
+    [root@node1 ~]# zpool list -PH -o name lustre1
+    lustre1
+      pci-0000:00:05.0-scsi-0:0:0:2 9.94G 228K 9.94G - 0% 0%
+
+    :param name: zpool name to interrogate
+    :param full_paths: True to retrieve full vdev paths (partitions), False for base device names
+    :return: list of device paths or names sorted in descending order of string length
+    """
+    cmd_flags = '-%sHv' % ('P' if full_paths is True else '')
+    out = Shell.try_run(['zpool', 'list', cmd_flags, '-o', 'name', name])
+
+    # ignore the first (zpool name) and last (newline character)s line of command output
+    return sorted([line.split()[0] for line in out.split('\n')[1:-1]], key=len, reverse=True)
 
 
 def get_lockfile_pid(lockfile):
@@ -78,7 +232,7 @@ class ZfsDevice(object):
 
         if self.try_import:
             try:
-                imported_pools = shell.Shell.try_run(["zpool", "list", "-H", "-o", "name"]).split('\n')
+                imported_pools = Shell.try_run(["zpool", "list", "-H", "-o", "name"]).split('\n')
             except:
                 self.unlock_pool()
                 raise
@@ -103,8 +257,8 @@ class ZfsDevice(object):
                 result = self.export()
 
                 if result is not None:
-                    raise shell.Shell.CommandExecutionError(shell.Shell.RunResult(1, '', result, False),
-                                                            ['zpool import of %s' % self.pool_path])
+                    raise Shell.CommandExecutionError(Shell.RunResult(1, '', result, False),
+                                                      ['zpool import of %s' % self.pool_path])
 
                 self.pool_imported = False
         finally:
@@ -165,9 +319,9 @@ class ZfsDevice(object):
         self.lock_pool()
 
         try:
-            return shell.Shell.run_canned_error_message(['zpool', 'import'] +
-                                                        (['-N', '-o', 'readonly=on', '-o', 'cachefile=none'] if readonly else []) +
-                                                        [self.pool_path])
+            return Shell.run_canned_error_message(['zpool', 'import'] +
+                                                  (['-N', '-o', 'readonly=on', '-o', 'cachefile=none'] if readonly else []) +
+                                                  [self.pool_path])
         finally:
             self.unlock_pool()
 
@@ -189,7 +343,7 @@ class ZfsDevice(object):
             result = None
 
             while timeout > 0:
-                result = shell.Shell.run_canned_error_message(['zpool', 'export', self.pool_path])
+                result = Shell.run_canned_error_message(['zpool', 'export', self.pool_path])
 
                 if result is None or ('pool is busy' not in result):
                     return result
@@ -224,8 +378,8 @@ class BlockDeviceZfs(BlockDevice):
 
     def _initialize_modules(self):
         if not self._modules_initialized:
-            shell.Shell.try_run(['modprobe', 'osd_zfs'])
-            shell.Shell.try_run(['modprobe', 'zfs'])
+            Shell.try_run(['modprobe', 'osd_zfs'])
+            Shell.try_run(['modprobe', 'zfs'])
 
             self._modules_initialized = True
 
@@ -245,7 +399,7 @@ class BlockDeviceZfs(BlockDevice):
 
         with ZfsDevice(self._device_path, False):
             try:
-                device_names = shell.Shell.try_run(['zfs', 'list', '-H', '-o', 'name', '-r', self._device_path]).split('\n')
+                device_names = Shell.try_run(['zfs', 'list', '-H', '-o', 'name', '-r', self._device_path]).split('\n')
 
                 datasets = [line.split('/', 1)[1] for line in device_names if '/' in line]
 
@@ -256,7 +410,7 @@ class BlockDeviceZfs(BlockDevice):
                 return None
             except OSError:                             # zfs not found
                 return "Unable to execute commands, check zfs is installed."
-            except shell.Shell.CommandExecutionError as e:    # no zpool 'self._device_path' found
+            except Shell.CommandExecutionError as e:    # no zpool 'self._device_path' found
                 return str(e)
 
     @property
@@ -283,7 +437,7 @@ class BlockDeviceZfs(BlockDevice):
         try:
             with ZfsDevice(self._device_path, True) as zfs_device:
                 if zfs_device.available:
-                    out = shell.Shell.try_run(['zfs', 'get', '-H', '-o', 'value', 'guid', self._device_path])
+                    out = Shell.try_run(['zfs', 'get', '-H', '-o', 'value', 'guid', self._device_path])
         except OSError:                                     # Zfs not found.
             pass
 
@@ -308,7 +462,7 @@ class BlockDeviceZfs(BlockDevice):
             return blockdevice.failmode
         else:
             with ZfsDevice(self._device_path, False):
-                return shell.Shell.try_run(["zpool", "get", "-Hp", "failmode", self._device_path]).split()[2]
+                return Shell.try_run(["zpool", "get", "-Hp", "failmode", self._device_path]).split()[2]
 
     @failmode.setter
     def failmode(self, value):
@@ -320,7 +474,7 @@ class BlockDeviceZfs(BlockDevice):
             blockdevice.failmode = value
         else:
             with ZfsDevice(self._device_path, False):
-                shell.Shell.try_run(["zpool", "set", "failmode=%s" % value, self._device_path])
+                Shell.try_run(["zpool", "set", "failmode=%s" % value, self._device_path])
 
     def zfs_properties(self, reread, log=None):
         """
@@ -337,7 +491,7 @@ class BlockDeviceZfs(BlockDevice):
                 if not zfs_device.available:
                     return self._zfs_properties
 
-                ls = shell.Shell.try_run(["zfs", "get", "-Hp", "-o", "property,value", "all", self._device_path])
+                ls = Shell.try_run(["zfs", "get", "-Hp", "-o", "property,value", "all", self._device_path])
 
                 for line in ls.split("\n"):
                     try:
@@ -367,7 +521,7 @@ class BlockDeviceZfs(BlockDevice):
                 if not zfs_device.available:
                     return self._zpool_properties
 
-                ls = shell.Shell.try_run(["zpool", "get", "-Hp", "all", self._device_path])
+                ls = Shell.try_run(["zpool", "get", "-Hp", "all", self._device_path])
 
                 for line in ls.strip().split("\n"):
                     try:
@@ -507,10 +661,8 @@ class BlockDeviceZfs(BlockDevice):
         except OSError:
             pass
 
-        # remove json store for zfs objects
-        try:
-            os.remove('/tmp/store.json')
-        except OSError:
+        # create or truncate json store for zfs objects
+        with open(ZFS_OBJECT_STORE_PATH, 'w'):
             pass
 
         if managed_mode is False:
@@ -518,17 +670,17 @@ class BlockDeviceZfs(BlockDevice):
 
         if os.path.isfile('/etc/hostid') is False:
             # only create an ID if one doesn't already exist
-            result = shell.Shell.run(['genhostid'])
+            result = Shell.run(['genhostid'])
 
             if result.rc != 0:
                 error = 'Error preparing nodes for ZFS multimount protection. gethostid failed with %s' \
                         % result.stderr
 
         def disable_if_exists(name):
-            status = shell.Shell.run(['systemctl', 'status', name])
+            status = Shell.run(['systemctl', 'status', name])
 
             if status.rc != 4:
-                return shell.Shell.run_canned_error_message([
+                return Shell.run_canned_error_message([
                     'systemctl',
                     'disable',
                     name
@@ -549,7 +701,7 @@ class BlockDeviceZfs(BlockDevice):
         # to a kernel update.
         if error is None:
             for install_package in ['spl', 'zfs']:
-                result = shell.Shell.run(['rpm', '-qi', install_package])
+                result = Shell.run(['rpm', '-qi', install_package])
 
                 # If we get an error there is no package so nothing to do.
                 if result.rc == 0:
@@ -560,10 +712,10 @@ class BlockDeviceZfs(BlockDevice):
 
                     if version is not None:
                         try:
-                            error = shell.Shell.run_canned_error_message(['dkms', 'install', '%s/%s' % (install_package, version)])
+                            error = Shell.run_canned_error_message(['dkms', 'install', '%s/%s' % (install_package, version)])
 
                             if error is None:
-                                error = shell.Shell.run_canned_error_message(['modprobe', install_package])
+                                error = Shell.run_canned_error_message(['modprobe', install_package])
                         except OSError as e:
                             if e.errno != errno.ENOENT:
                                 error = 'Error running "dkms install %s/%s" error return %s' % (install_package, version, e.errno)
@@ -580,7 +732,7 @@ class BlockDeviceZfs(BlockDevice):
         """
         # remove json store for zfs objects
         try:
-            os.remove('/tmp/store.json')
+            os.remove(ZFS_OBJECT_STORE_PATH)
         except OSError:
             pass
 
