@@ -87,7 +87,7 @@ class ZfsDevice(object):
 
             if self.pool_path not in imported_pools:
                 try:
-                    result = self.import_(True, True)
+                    result = self.import_(True)
                     self.pool_imported = (result is None)
                 except:
                     self.unlock_pool()
@@ -155,7 +155,7 @@ class ZfsDevice(object):
         if self.lock_refcount[self.lock_unique_id] == 0:
             self.lock.release()
 
-    def import_(self, force, readonly):
+    def import_(self, readonly):
         """
         This must be called when doing an import as it will lock the device before doing imports and ensure there is
         no confusion about whether a device is import or not.
@@ -166,7 +166,6 @@ class ZfsDevice(object):
 
         try:
             return shell.Shell.run_canned_error_message(['zpool', 'import'] +
-                                                        (['-f'] if force else []) +
                                                         (['-N', '-o', 'readonly=on', '-o', 'cachefile=none'] if readonly else []) +
                                                         [self.pool_path])
         finally:
@@ -348,7 +347,7 @@ class BlockDeviceZfs(BlockDevice):
 
                 for line in ls.split("\n"):
                     try:
-                        key, value = line.split('\t')
+                        key, value = line.split()
                         self._zfs_properties[key] = value
                     except ValueError:                              # Be resilient to things we don't understand.
                         if log:
@@ -378,7 +377,7 @@ class BlockDeviceZfs(BlockDevice):
 
                 for line in ls.strip().split("\n"):
                     try:
-                        _, key, value, _ = line.split('\t')
+                        _, key, value, _ = line.split()
                         self._zpool_properties[key] = value
                     except ValueError:                              # Be resilient to things we don't understand.
                         if log:
@@ -431,15 +430,13 @@ class BlockDeviceZfs(BlockDevice):
 
         return self.TargetsInfo(names, params)
 
-    def import_(self, pacemaker_ha_operation):
+    def import_(self):
         """
         Before importing check the device_path does not reference a dataset, if it does then retry on parent zpool
         block device.
 
         We can only import the zpool if it's not already imported so check before importing.
 
-        :param pacemaker_ha_operation: This import is at the request of pacemaker. In HA operations the device may
-               often have not have been cleanly exported because the previous mounted node failed in operation.
         :return: None for success meaning the zpool is imported
         """
         self._initialize_modules()
@@ -449,10 +446,10 @@ class BlockDeviceZfs(BlockDevice):
         except NotZpoolException:
             blockdevice = BlockDevice(self._supported_device_types[0], self._device_path.split('/')[0])
 
-            return blockdevice.import_(pacemaker_ha_operation)
+            return blockdevice.import_()
 
         with ZfsDevice(self._device_path, False) as zfs_device:
-            result = zfs_device.import_(pacemaker_ha_operation, False)
+            result = zfs_device.import_(False)
 
             if result is not None and 'a pool with that name already exists' in result:
 
@@ -463,7 +460,7 @@ class BlockDeviceZfs(BlockDevice):
                     if result is not None:
                         return "zpool was imported readonly, and failed to export: '%s'" % result
 
-                    result = self.import_(pacemaker_ha_operation)
+                    result = self.import_()
 
                     if (result is None) and (self.zpool_properties(True).get('readonly') == 'on'):
                         return 'zfs pool %s can only be imported readonly, is it in use?' % self._device_path
@@ -513,6 +510,12 @@ class BlockDeviceZfs(BlockDevice):
         # ensure lock directory exists
         try:
             os.makedirs(ZfsDevice.ZPOOL_LOCK_DIR)
+        except OSError:
+            pass
+
+        # remove json store for zfs objects
+        try:
+            os.remove('/tmp/store.json')
         except OSError:
             pass
 
@@ -581,6 +584,12 @@ class BlockDeviceZfs(BlockDevice):
         Iterate through existing lockfiles and for each check if pid written into lock is THIS process' pid and
         if so, remove lockfile. If no pid written into lockfile, ignore (linklockfiles).
         """
+        # remove json store for zfs objects
+        try:
+            os.remove('/tmp/store.json')
+        except OSError:
+            pass
+
         lockfile_paths = [os.path.join(ZfsDevice.ZPOOL_LOCK_DIR, name) for name in os.listdir(ZfsDevice.ZPOOL_LOCK_DIR)]
 
         def validate_or_remove(path):

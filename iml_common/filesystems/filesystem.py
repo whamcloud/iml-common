@@ -18,6 +18,10 @@ class FileSystem(object):
     it around as a class and not as a hash of its values.
     """
 
+    RC_MOUNT_SUCCESS = 0
+    RC_MOUNT_INPUT_OUTPUT_ERROR = 5
+    RC_MOUNT_ESHUTDOWN_ERROR = 108
+
     class_override = None
     __metaclass__ = abc.ABCMeta
 
@@ -74,7 +78,16 @@ class FileSystem(object):
         """ :return: Mount the file system, raise an exception on error. """
         self._initialize_modules()
 
-        return shell.Shell.try_run(["mount", "-t", "lustre", "%s" % self._device_path, mount_point])
+        result = shell.Shell.run(['mount', '-t', 'lustre', self._device_path, mount_point])
+
+        if result.rc == self.RC_MOUNT_INPUT_OUTPUT_ERROR or \
+           result.rc == self.RC_MOUNT_ESHUTDOWN_ERROR:
+            # HYD-1040, LU-9838: Sometimes we should retry on a failed registration
+            result = shell.Shell.run(['mount', '-t', 'lustre', self._device_path, mount_point])
+
+        if result.rc != self.RC_MOUNT_SUCCESS:
+            raise RuntimeError("Error (%s) mounting '%s': '%s' '%s'" % (result.rc, mount_point, result.stdout, result.stderr))
+
 
     def umount(self):
         """ :return: Umount the file system, raise an exception on error. """
