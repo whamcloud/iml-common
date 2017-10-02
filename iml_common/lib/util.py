@@ -1,26 +1,17 @@
 # Copyright (c) 2017 Intel Corporation. All rights reserved.
 # Use of this source code is governed by a MIT-style
 # license that can be found in the LICENSE file.
-import json
+
 
 import os
 import errno
 import time
+import itertools
 import threading
 import platform
 from collections import namedtuple
 from collections import MutableSequence
 import signal
-
-
-# functional primitives
-import itertools
-from toolz import compose
-from toolz.curried import partial
-
-filter_empty = partial(filter, None)
-strip_lines = partial(map, lambda x: x.strip())
-clean_list = compose(filter_empty, strip_lines)
 
 
 ExpiringValue = namedtuple('ExpiringValue', ['value', 'expiry'])
@@ -277,29 +268,3 @@ def pid_exists(pid):
             raise
     else:
         return True
-
-
-def write_to_store(key, value, filepath):
-    """
-    :param key: key to update value for store
-    :param value: value to assign to given key
-    :param filepath: filepath of store
-    :return: None
-    """
-    data = read_store(filepath)
-
-    # preserve other keys, only overwrite the key specified
-    data[key] = value
-    with open(filepath, 'w') as f:
-        f.write(json.dumps(data))
-
-
-def read_store(filepath):
-    """ Store file should always exist because it's created on agent initialisation """
-    with open(filepath, 'r') as f:
-        return json.loads(f.read())
-
-
-def read_from_store(key, filepath):
-    """ Read specific key data from store """
-    return read_store(filepath)[key]
