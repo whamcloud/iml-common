@@ -254,7 +254,7 @@ class BlockDeviceZfs(BlockDevice):
         else:
             with ZfsDevice(self._device_path, False):
                 try:
-                    device_names = shell.Shell.try_run(['zfs', 'list', '-H', '-o', 'name', '-r', self._device_path]).split('\n')
+                    device_names = Shell.try_run(['zfs', 'list', '-H', '-o', 'name', '-r', self._device_path]).split('\n')
                     datasets = [line.split('/', 1)[1] for line in device_names if '/' in line]
 
                     if datasets:
@@ -264,7 +264,7 @@ class BlockDeviceZfs(BlockDevice):
                     return None
                 except OSError:                             # zfs not found
                     return "Unable to execute commands, check zfs is installed."
-                except shell.Shell.CommandExecutionError as e:    # no zpool 'self._device_path' found
+                except Shell.CommandExecutionError as e:    # no zpool 'self._device_path' found
                     return str(e)
 
     @property
