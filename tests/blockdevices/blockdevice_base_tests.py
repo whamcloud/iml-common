@@ -66,7 +66,7 @@ class BaseTestBD(object):
             pass
 
         def test_import_success(self):
-            self.assertIsNone(self.blockdevice.import_())
+            self.assertIsNone(self.blockdevice.import_(False))
 
         def test_export_success(self):
             self.assertIsNone(self.blockdevice.export())

@@ -159,7 +159,7 @@ kernel modules are functioning properly.
         self.blockdevice = BlockDeviceZfs('zfs', self.dataset_path)
         self.add_commands(CommandCaptureCommand(('zpool', 'import', self.pool_name)))
 
-        self.assertIsNone(self.blockdevice.import_())
+        self.assertIsNone(self.blockdevice.import_(False))
         self.assertRanAllCommandsInOrder()
 
     def test_import_existing_readonly(self):
@@ -186,7 +186,7 @@ kernel modules are functioning properly.
                           CommandCaptureCommand(('zpool', 'get', '-Hp', 'all', self.pool_name),
                                                 stdout=example_data.zpool_example_properties))
 
-        self.assertIsNone(self.blockdevice.import_())
+        self.assertIsNone(self.blockdevice.import_(False))
         self.assertRanAllCommandsInOrder()
 
     def test_export_success(self):
