@@ -20,6 +20,7 @@ class FileSystem(object):
 
     RC_MOUNT_SUCCESS = 0
     RC_MOUNT_INPUT_OUTPUT_ERROR = 5
+    RC_MOUNT_ENOENT_ERROR = 2
     RC_MOUNT_ESHUTDOWN_ERROR = 108
 
     class_override = None
@@ -80,9 +81,10 @@ class FileSystem(object):
 
         result = shell.Shell.run(['mount', '-t', 'lustre', self._device_path, mount_point])
 
-        if result.rc == self.RC_MOUNT_INPUT_OUTPUT_ERROR or \
-           result.rc == self.RC_MOUNT_ESHUTDOWN_ERROR:
-            # HYD-1040, LU-9838: Sometimes we should retry on a failed registration
+        if result.rc in [self.RC_MOUNT_INPUT_OUTPUT_ERROR,
+                         self.RC_MOUNT_ENOENT_ERROR,
+                         self.RC_MOUNT_ESHUTDOWN_ERROR]:
+            # HYD-1040, LU-9838, LU-9976: Sometimes we should retry on a failed registration
             result = shell.Shell.run(['mount', '-t', 'lustre', self._device_path, mount_point])
 
         if result.rc != self.RC_MOUNT_SUCCESS:
