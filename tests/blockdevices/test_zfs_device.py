@@ -30,7 +30,7 @@ class TestZfsDevice(CommandCaptureTestCase):
         self.add_commands(CommandCaptureCommand(('zpool', 'list', '-H', '-o', 'name'), stdout=name))
 
         if name != self.zpool_name:
-            self.add_commands(CommandCaptureCommand(('zpool', 'import', '-N', '-o', 'readonly=on', '-o', 'cachefile=none', self.zpool_name)))
+            self.add_commands(CommandCaptureCommand(('zpool', 'import', '-f', '-N', '-o', 'readonly=on', '-o', 'cachefile=none', self.zpool_name)))
 
     def _add_export_commands(self):
         self.add_commands(CommandCaptureCommand(('zpool', 'export', self.zpool_name)))
@@ -73,21 +73,23 @@ class TestZfsDeviceImportExport(TestZfsDevice):
         self.zfs_device.lock.is_locked.return_value ^= True
 
     def test_import(self):
-        for readonly in [True, False]:
-            self.reset_command_capture()
+        for force in [True, False]:
+            for readonly in [True, False]:
+                self.reset_command_capture()
 
-            self.add_commands(CommandCaptureCommand(('zpool', 'import') +
-                                                    (('-N', '-o', 'readonly=on', '-o', 'cachefile=none') if readonly else ()) +
-                                                    (self.zpool_name,)))
+                self.add_commands(CommandCaptureCommand(('zpool', 'import') +
+                                                        (('-f',) if force else ()) +
+                                                        (('-N', '-o', 'readonly=on', '-o', 'cachefile=none') if readonly else ()) +
+                                                        (self.zpool_name,)))
 
-            self.zfs_device.import_(readonly)
+                self.zfs_device.import_(force, readonly)
 
-            self.zfs_device.lock.acquire.assert_called_once_with(ZfsDevice.LOCK_ACQUIRE_TIMEOUT)
-            self.zfs_device.lock.release.assert_called_once_with()
-            self.assertEqual(ZfsDevice.lock_refcount.get(self.zfs_device.lock_unique_id), 0)
+                self.zfs_device.lock.acquire.assert_called_once_with(ZfsDevice.LOCK_ACQUIRE_TIMEOUT)
+                self.zfs_device.lock.release.assert_called_once_with()
+                self.assertEqual(ZfsDevice.lock_refcount.get(self.zfs_device.lock_unique_id), 0)
 
-            self.assertRanAllCommandsInOrder()
-            self.zfs_device.lock.reset_mock()
+                self.assertRanAllCommandsInOrder()
+                self.zfs_device.lock.reset_mock()
 
     def test_import_writable(self):
         self._add_import_commands()
@@ -171,7 +173,7 @@ class TestZfsDeviceImportExport(TestZfsDevice):
 
     def test_error_in_import(self):
         self.add_commands(CommandCaptureCommand(('zpool', 'list', '-H', '-o', 'name'), stdout='Boris'),
-                          CommandCaptureCommand(('zpool', 'import', '-N', '-o', 'readonly=on', '-o', 'cachefile=none',
+                          CommandCaptureCommand(('zpool', 'import', '-f', '-N', '-o', 'readonly=on', '-o', 'cachefile=none',
                                                  self.zpool_name), rc=1))
 
         exported_zfs_device = self._get_zfs_device(self.zpool_name, True)
@@ -271,7 +273,7 @@ class TestZfsDeviceLockFile(TestZfsDevice):
         self.add_command(('zpool', 'import', self.zpool_name))
         self.thread_running = True
         zfs_device = ZfsDevice(self.zpool_name, False)
-        zfs_device.import_(False)
+        zfs_device.import_(False, False)
         self.assertFalse(zfs_device.lock.i_am_locking())
         self.thread_running = False
 

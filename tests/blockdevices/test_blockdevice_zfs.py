@@ -155,16 +155,15 @@ kernel modules are functioning properly.
     def test_mgs_targets(self):
         self.assertEqual({}, self.blockdevice.mgs_targets(None))
 
-    def test_import_success(self):
+    def test_import_success_non_pacemaker(self):
         self.blockdevice = BlockDeviceZfs('zfs', self.dataset_path)
+
         self.add_commands(CommandCaptureCommand(('zpool', 'import', self.pool_name)))
 
         self.assertIsNone(self.blockdevice.import_(False))
         self.assertRanAllCommandsInOrder()
 
     def test_import_existing_readonly(self):
-        self.blockdevice = BlockDeviceZfs('zfs', self.dataset_path)
-
         props = re.sub(r'readonly\s+off', 'readonly    on', example_data.zpool_example_properties)
 
         self.add_commands(CommandCaptureCommand(('zpool', 'import', self.pool_name),
@@ -186,8 +185,29 @@ kernel modules are functioning properly.
                           CommandCaptureCommand(('zpool', 'get', '-Hp', 'all', self.pool_name),
                                                 stdout=example_data.zpool_example_properties))
 
+        self.blockdevice = BlockDeviceZfs('zfs', self.dataset_path)
+
         self.assertIsNone(self.blockdevice.import_(False))
         self.assertRanAllCommandsInOrder()
+
+    def test_import_success_with_pacemaker(self):
+        self.blockdevice = BlockDeviceZfs('zfs', self.dataset_path)
+
+        self.add_commands(CommandCaptureCommand(('zpool', 'import', '-f', self.blockdevice._device_path.split('/')[0])))
+
+        self.assertIsNone(self.blockdevice.import_(True))
+        self.assertRanAllCommandsInOrder()
+
+    def test_import_existing_non_pacemaker(self):
+        self.blockdevice = BlockDeviceZfs('zfs', self.dataset_path)
+
+        self.add_commands(CommandCaptureCommand(('zpool', 'import', self.pool_name)))
+
+        self.assertIsNone(self.blockdevice.import_(False))
+        self.assertRanAllCommandsInOrder()
+
+    def test_import_existing_with_pacemaker(self):
+        self.test_import_existing_non_pacemaker()
 
     def test_export_success(self):
         self.blockdevice = BlockDeviceZfs('zfs', self.dataset_path)
