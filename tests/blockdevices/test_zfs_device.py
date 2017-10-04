@@ -30,7 +30,7 @@ class TestZfsDevice(CommandCaptureTestCase):
         self.add_commands(CommandCaptureCommand(('zpool', 'list', '-H', '-o', 'name'), stdout=name))
 
         if name != self.zpool_name:
-            self.add_commands(CommandCaptureCommand(('zpool', 'import', '-f', '-N', '-o', 'readonly=on', '-o', 'cachefile=none', self.zpool_name)))
+            self.add_commands(CommandCaptureCommand(('zpool', 'import', '-N', '-o', 'readonly=on', '-o', 'cachefile=none', self.zpool_name)))
 
     def _add_export_commands(self):
         self.add_commands(CommandCaptureCommand(('zpool', 'export', self.zpool_name)))
@@ -173,7 +173,7 @@ class TestZfsDeviceImportExport(TestZfsDevice):
 
     def test_error_in_import(self):
         self.add_commands(CommandCaptureCommand(('zpool', 'list', '-H', '-o', 'name'), stdout='Boris'),
-                          CommandCaptureCommand(('zpool', 'import', '-f', '-N', '-o', 'readonly=on', '-o', 'cachefile=none',
+                          CommandCaptureCommand(('zpool', 'import', '-N', '-o', 'readonly=on', '-o', 'cachefile=none',
                                                  self.zpool_name), rc=1))
 
         exported_zfs_device = self._get_zfs_device(self.zpool_name, True)
