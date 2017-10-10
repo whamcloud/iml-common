@@ -46,6 +46,8 @@ class TestZfsDeviceImportExport(TestZfsDevice):
     def setUp(self):
         super(TestZfsDeviceImportExport, self).setUp()
 
+        self.add_commands(CommandCaptureCommand(('udevadm', 'settle')))
+
         mock_lock_file = mock.Mock(autospec=LockFile)
         # add attributes to mock that would be created at runtime and therefore cannot be autospecced
         mock_lock_file.unique_name = ''
@@ -76,6 +78,8 @@ class TestZfsDeviceImportExport(TestZfsDevice):
         for force in [True, False]:
             for readonly in [True, False]:
                 self.reset_command_capture()
+
+                self.add_commands(CommandCaptureCommand(('udevadm', 'settle')))
 
                 self.add_commands(CommandCaptureCommand(('zpool', 'import') +
                                                         (('-f',) if force else ()) +
@@ -254,6 +258,8 @@ class TestZfsDeviceImportExport(TestZfsDevice):
 class TestZfsDeviceLockFile(TestZfsDevice):
     def setUp(self):
         super(TestZfsDeviceLockFile, self).setUp()
+
+        self.add_commands(CommandCaptureCommand(('udevadm', 'settle')))
 
         mock.patch('iml_common.blockdevices.blockdevice_zfs.ZfsDevice.ZPOOL_LOCK_DIR',
                    TEST_ZPOOL_LOCK_DIR).start()

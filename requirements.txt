@@ -1,4 +1,4 @@
 pytest
 Django==1.4.5
 twine
-lockfile
+lockfile==0.9.1
