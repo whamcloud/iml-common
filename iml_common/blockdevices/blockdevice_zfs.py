@@ -146,6 +146,8 @@ class ZfsDevice(object):
                 else:
                     log.warning('lock acquire on lockfile %s timed out, lock owned by PID %s' % (self.lock.lock_file,
                                                                                                  pid))
+            else:
+                Shell.run_canned_error_message(['udevadm', 'settle'])
 
         self.lock_refcount[self.lock_unique_id] += 1
 
