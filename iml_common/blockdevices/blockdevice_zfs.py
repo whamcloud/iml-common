@@ -146,6 +146,8 @@ class ZfsDevice(object):
                 else:
                     log.warning('lock acquire on lockfile %s timed out, lock owned by PID %s' % (self.lock.lock_file,
                                                                                                  pid))
+            else:
+                Shell.run_canned_error_message(['udevadm', 'settle'])
 
         self.lock_refcount[self.lock_unique_id] += 1
 
@@ -583,12 +585,6 @@ class BlockDeviceZfs(BlockDevice):
         Iterate through existing lockfiles and for each check if pid written into lock is THIS process' pid and
         if so, remove lockfile. If no pid written into lockfile, ignore (linklockfiles).
         """
-        # remove json store for zfs objects
-        try:
-            os.remove(ZFS_OBJECT_STORE_PATH)
-        except OSError:
-            pass
-
         lockfile_paths = [os.path.join(ZfsDevice.ZPOOL_LOCK_DIR, name) for name in os.listdir(ZfsDevice.ZPOOL_LOCK_DIR)]
 
         def validate_or_remove(path):

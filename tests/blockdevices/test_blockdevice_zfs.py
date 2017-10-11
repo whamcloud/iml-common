@@ -290,6 +290,7 @@ kernel modules are functioning properly.
             result = BlockDeviceZfs.initialise_driver(True)
 
         self.mock_makedirs.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
+        self.mock_open.assert_called_once_with(ZFS_OBJECT_STORE_PATH, 'w')
         self.assertEqual(result, None)
         self.assertRanAllCommandsInOrder()
 
@@ -313,6 +314,7 @@ kernel modules are functioning properly.
             result = BlockDeviceZfs.initialise_driver(True)
 
         self.mock_makedirs.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
+        self.mock_open.assert_called_once_with(ZFS_OBJECT_STORE_PATH, 'w')
         self.assertEqual(result, None)
         self.assertRanAllCommandsInOrder()
 
@@ -323,6 +325,7 @@ kernel modules are functioning properly.
             result = BlockDeviceZfs.initialise_driver(True)
 
         self.mock_makedirs.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
+        self.mock_open.assert_called_once_with(ZFS_OBJECT_STORE_PATH, 'w')
         self.assertIn('sample genhostid error text', result)
         self.assertRanAllCommandsInOrder()
 
@@ -343,6 +346,7 @@ kernel modules are functioning properly.
             result = BlockDeviceZfs.initialise_driver(True)
 
         self.mock_makedirs.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
+        self.mock_open.assert_called_once_with(ZFS_OBJECT_STORE_PATH, 'w')
         self.assertIn('sample dkms error text', result)
         self.assertRanAllCommandsInOrder()
 
@@ -366,6 +370,7 @@ kernel modules are functioning properly.
             result = BlockDeviceZfs.initialise_driver(True)
 
         self.mock_makedirs.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
+        self.mock_open.assert_called_once_with(ZFS_OBJECT_STORE_PATH, 'w')
         self.assertIn('sample dkms error text', result)
         self.assertRanAllCommandsInOrder()
 
@@ -390,6 +395,7 @@ kernel modules are functioning properly.
             result = BlockDeviceZfs.initialise_driver(True)
 
         self.mock_makedirs.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
+        self.mock_open.assert_called_once_with(ZFS_OBJECT_STORE_PATH, 'w')
         self.assertIn('sample modprobe error text', result)
         self.assertRanAllCommandsInOrder()
 
@@ -397,6 +403,7 @@ kernel modules are functioning properly.
         result = BlockDeviceZfs.initialise_driver(False)
 
         self.mock_makedirs.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
+        self.mock_open.assert_called_once_with(ZFS_OBJECT_STORE_PATH, 'w')
         self.assertEqual(result, None)
         self.assertRanAllCommandsInOrder()
 
@@ -418,20 +425,19 @@ kernel modules are functioning properly.
         mock_getpid, mock_listdir, mock_lockfilepid = self._base_terminate_driver_test(1234,
                                                                                                     ['pool1'],
                                                                                                     1234)
-        self.mock_remove.assert_has_calls([mock.call(ZFS_OBJECT_STORE_PATH),
-                                           mock.call('%s/pool1' % ZfsDevice.ZPOOL_LOCK_DIR)])
         mock_getpid.assert_called_once_with()
         mock_listdir.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
         mock_lockfilepid.assert_called_once_with('%s/pool1' % ZfsDevice.ZPOOL_LOCK_DIR)
+        self.mock_remove.assert_called_once_with('%s/pool1' % ZfsDevice.ZPOOL_LOCK_DIR)
 
     def test_terminate_driver_active_locks_other_process(self):
         mock_getpid, mock_listdir, mock_lockfilepid = self._base_terminate_driver_test(1233,
                                                                                                     ['pool1'],
                                                                                                     1234)
-        self.mock_remove.assert_called_once_with(ZFS_OBJECT_STORE_PATH)
         mock_getpid.assert_called_once_with()
         mock_listdir.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
         mock_lockfilepid.assert_called_once_with('%s/pool1' % ZfsDevice.ZPOOL_LOCK_DIR)
+        self.mock_remove.assert_not_called()
 
     def test_terminate_driver_file_with_no_pid(self):
         mock_getpid = mock.Mock(return_value=1234)
@@ -445,7 +451,7 @@ kernel modules are functioning properly.
 
         self.assertEqual(result, None)
 
-        self.mock_remove.assert_called_once_with(ZFS_OBJECT_STORE_PATH)
         assert mock_getpid.call_args_list == []
         mock_listdir.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
         mock_lockfilepid.assert_called_once_with('%s/pool1' % ZfsDevice.ZPOOL_LOCK_DIR)
+        self.mock_remove.assert_not_called()
