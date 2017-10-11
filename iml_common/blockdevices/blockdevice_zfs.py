@@ -92,7 +92,11 @@ class ZfsDevice(object):
             if self.pool_path not in imported_pools:
                 try:
                     result = self.import_(False, True)
-                    self.pool_imported = (result is None)
+
+                    if result is None:
+                        self.pool_imported = True
+                    else:
+                        log.error(result)
                 except:
                     self.unlock_pool()
                     raise
