@@ -290,7 +290,7 @@ kernel modules are functioning properly.
             result = BlockDeviceZfs.initialise_driver(True)
 
         self.mock_makedirs.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
-        self.mock_open.assert_called_once_with(ZFS_OBJECT_STORE_PATH, 'w')
+        self.mock_open.assert_called_once_with(ZFS_OBJECT_STORE_PATH, 'a')
         self.assertEqual(result, None)
         self.assertRanAllCommandsInOrder()
 
@@ -314,7 +314,7 @@ kernel modules are functioning properly.
             result = BlockDeviceZfs.initialise_driver(True)
 
         self.mock_makedirs.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
-        self.mock_open.assert_called_once_with(ZFS_OBJECT_STORE_PATH, 'w')
+        self.mock_open.assert_called_once_with(ZFS_OBJECT_STORE_PATH, 'a')
         self.assertEqual(result, None)
         self.assertRanAllCommandsInOrder()
 
@@ -325,7 +325,7 @@ kernel modules are functioning properly.
             result = BlockDeviceZfs.initialise_driver(True)
 
         self.mock_makedirs.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
-        self.mock_open.assert_called_once_with(ZFS_OBJECT_STORE_PATH, 'w')
+        self.mock_open.assert_called_once_with(ZFS_OBJECT_STORE_PATH, 'a')
         self.assertIn('sample genhostid error text', result)
         self.assertRanAllCommandsInOrder()
 
@@ -346,7 +346,7 @@ kernel modules are functioning properly.
             result = BlockDeviceZfs.initialise_driver(True)
 
         self.mock_makedirs.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
-        self.mock_open.assert_called_once_with(ZFS_OBJECT_STORE_PATH, 'w')
+        self.mock_open.assert_called_once_with(ZFS_OBJECT_STORE_PATH, 'a')
         self.assertIn('sample dkms error text', result)
         self.assertRanAllCommandsInOrder()
 
@@ -370,7 +370,7 @@ kernel modules are functioning properly.
             result = BlockDeviceZfs.initialise_driver(True)
 
         self.mock_makedirs.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
-        self.mock_open.assert_called_once_with(ZFS_OBJECT_STORE_PATH, 'w')
+        self.mock_open.assert_called_once_with(ZFS_OBJECT_STORE_PATH, 'a')
         self.assertIn('sample dkms error text', result)
         self.assertRanAllCommandsInOrder()
 
@@ -395,7 +395,7 @@ kernel modules are functioning properly.
             result = BlockDeviceZfs.initialise_driver(True)
 
         self.mock_makedirs.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
-        self.mock_open.assert_called_once_with(ZFS_OBJECT_STORE_PATH, 'w')
+        self.mock_open.assert_called_once_with(ZFS_OBJECT_STORE_PATH, 'a')
         self.assertIn('sample modprobe error text', result)
         self.assertRanAllCommandsInOrder()
 
@@ -403,7 +403,7 @@ kernel modules are functioning properly.
         result = BlockDeviceZfs.initialise_driver(False)
 
         self.mock_makedirs.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
-        self.mock_open.assert_called_once_with(ZFS_OBJECT_STORE_PATH, 'w')
+        self.mock_open.assert_called_once_with(ZFS_OBJECT_STORE_PATH, 'a')
         self.assertEqual(result, None)
         self.assertRanAllCommandsInOrder()
 

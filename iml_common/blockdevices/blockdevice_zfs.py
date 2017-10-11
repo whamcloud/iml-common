@@ -521,7 +521,7 @@ class BlockDeviceZfs(BlockDevice):
             pass
 
         # create or truncate json store for zfs objects
-        with open(ZFS_OBJECT_STORE_PATH, 'w'):
+        with open(ZFS_OBJECT_STORE_PATH, 'a'):
             pass
 
         if managed_mode is False:
