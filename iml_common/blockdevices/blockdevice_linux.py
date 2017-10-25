@@ -84,9 +84,13 @@ class BlockDeviceLinux(BlockDevice):
         If there is an MGS in the local targets, use debugfs to get a list of targets.
         Return a dict of filesystem->(list of targets)
         """
-        self._initialize_modules()
-
         result = defaultdict(lambda: [])
+
+        try:
+            self._initialize_modules()
+        except shell.Shell.CommandExecutionError:
+            log.info("ldiskfs is not installed, skipping device MGS/filesystem detection")
+            return result
 
         log.info("Searching Lustre logs for filesystems")
 
@@ -217,7 +221,11 @@ class BlockDeviceLinux(BlockDevice):
                 os.unlink(tmpfile)
 
     def targets(self, uuid_name_to_target, device, log):
-        self._initialize_modules()
+        try:
+            self._initialize_modules()
+        except shell.Shell.CommandExecutionError:
+            log.info("ldiskfs is not installed, skipping device %s")
+            return self.TargetsInfo([], None)
 
         log.info("Searching device %s of type %s, uuid %s for a Lustre filesystem" % (device['path'], device['type'], device['uuid']))
 
