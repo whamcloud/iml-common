@@ -136,7 +136,7 @@ PlatformInfo = namedtuple('PlatformInfo', ['system',
 usage should be much easier to fathom. Caches the value for speed which presumes
 the contents are constant for a given execution.
 
-For a Mac it pretends to be Centos 7.2.
+For a Mac, Windows or non-Centos Linux it pretends to be Centos 7.2.
 
 :return: PlatformInfo named tuple
 """
@@ -149,7 +149,7 @@ if platform.system() == 'Linux' and platform.linux_distribution()[0] == 'CentOS'
                                                   platform.python_version_tuple()[1])),
                                  int(platform.python_version_tuple()[2]),
                                  platform.release())
-elif platform.system() == 'Darwin' or platform.system() == 'Linux':
+elif platform.system() in ['Darwin', 'Windows', 'Linux']:
     platform_info = PlatformInfo('Linux',
                                  'CentOS',
                                  '7.2',
