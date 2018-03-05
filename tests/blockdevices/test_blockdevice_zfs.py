@@ -271,14 +271,6 @@ kernel modules are functioning properly.
 
     def test_initialise_driver(self):
         self.add_commands(CommandCaptureCommand(('genhostid',)),
-                          CommandCaptureCommand(('systemctl', 'status', 'zfs.target')),
-                          CommandCaptureCommand(('systemctl', 'disable', 'zfs.target')),
-                          CommandCaptureCommand(('systemctl', 'status', 'zfs-import-scan')),
-                          CommandCaptureCommand(('systemctl', 'disable', 'zfs-import-scan')),
-                          CommandCaptureCommand(('systemctl', 'status', 'zfs-import-cache')),
-                          CommandCaptureCommand(('systemctl', 'disable', 'zfs-import-cache')),
-                          CommandCaptureCommand(('systemctl', 'status', 'zfs-mount')),
-                          CommandCaptureCommand(('systemctl', 'disable', 'zfs-mount')),
                           CommandCaptureCommand(('rpm', '-qi', 'spl'), stdout=self.rpm_qi_spl_stdout),
                           CommandCaptureCommand(('dkms', 'install', 'spl/1.2.3.4')),
                           CommandCaptureCommand(('modprobe', 'spl')),
@@ -295,15 +287,7 @@ kernel modules are functioning properly.
         self.assertRanAllCommandsInOrder()
 
     def test_initialise_driver_file_exists(self):
-        self.add_commands(CommandCaptureCommand(('systemctl', 'status', 'zfs.target')),
-                          CommandCaptureCommand(('systemctl', 'disable', 'zfs.target')),
-                          CommandCaptureCommand(('systemctl', 'status', 'zfs-import-scan')),
-                          CommandCaptureCommand(('systemctl', 'disable', 'zfs-import-scan')),
-                          CommandCaptureCommand(('systemctl', 'status', 'zfs-import-cache')),
-                          CommandCaptureCommand(('systemctl', 'disable', 'zfs-import-cache')),
-                          CommandCaptureCommand(('systemctl', 'status', 'zfs-mount')),
-                          CommandCaptureCommand(('systemctl', 'disable', 'zfs-mount')),
-                          CommandCaptureCommand(('rpm', '-qi', 'spl'), stdout=self.rpm_qi_spl_stdout),
+        self.add_commands(CommandCaptureCommand(('rpm', '-qi', 'spl'), stdout=self.rpm_qi_spl_stdout),
                           CommandCaptureCommand(('dkms', 'install', 'spl/1.2.3.4')),
                           CommandCaptureCommand(('modprobe', 'spl')),
                           CommandCaptureCommand(('rpm', '-qi', 'zfs'), stdout=self.rpm_qi_zfs_stdout),
@@ -331,14 +315,6 @@ kernel modules are functioning properly.
 
     def test_initialise_driver_fail_dkms_spl(self):
         self.add_commands(CommandCaptureCommand(('genhostid',)),
-                          CommandCaptureCommand(('systemctl', 'status', 'zfs.target')),
-                          CommandCaptureCommand(('systemctl', 'disable', 'zfs.target')),
-                          CommandCaptureCommand(('systemctl', 'status', 'zfs-import-scan')),
-                          CommandCaptureCommand(('systemctl', 'disable', 'zfs-import-scan')),
-                          CommandCaptureCommand(('systemctl', 'status', 'zfs-import-cache')),
-                          CommandCaptureCommand(('systemctl', 'disable', 'zfs-import-cache')),
-                          CommandCaptureCommand(('systemctl', 'status', 'zfs-mount')),
-                          CommandCaptureCommand(('systemctl', 'disable', 'zfs-mount')),
                           CommandCaptureCommand(('rpm', '-qi', 'spl'), stdout=self.rpm_qi_spl_stdout),
                           CommandCaptureCommand(('dkms', 'install', 'spl/1.2.3.4'), rc=1, stderr='sample dkms error text'))
 
@@ -352,14 +328,6 @@ kernel modules are functioning properly.
 
     def test_initialise_driver_fail_dkms_zfs(self):
         self.add_commands(CommandCaptureCommand(('genhostid',)),
-                          CommandCaptureCommand(('systemctl', 'status', 'zfs.target')),
-                          CommandCaptureCommand(('systemctl', 'disable', 'zfs.target')),
-                          CommandCaptureCommand(('systemctl', 'status', 'zfs-import-scan')),
-                          CommandCaptureCommand(('systemctl', 'disable', 'zfs-import-scan')),
-                          CommandCaptureCommand(('systemctl', 'status', 'zfs-import-cache')),
-                          CommandCaptureCommand(('systemctl', 'disable', 'zfs-import-cache')),
-                          CommandCaptureCommand(('systemctl', 'status', 'zfs-mount')),
-                          CommandCaptureCommand(('systemctl', 'disable', 'zfs-mount')),
                           CommandCaptureCommand(('rpm', '-qi', 'spl'), stdout=self.rpm_qi_spl_stdout),
                           CommandCaptureCommand(('dkms', 'install', 'spl/1.2.3.4')),
                           CommandCaptureCommand(('modprobe', 'spl')),
@@ -376,14 +344,6 @@ kernel modules are functioning properly.
 
     def test_initialise_driver_fail_modprobe_zfs(self):
         self.add_commands(CommandCaptureCommand(('genhostid',)),
-                          CommandCaptureCommand(('systemctl', 'status', 'zfs.target')),
-                          CommandCaptureCommand(('systemctl', 'disable', 'zfs.target')),
-                          CommandCaptureCommand(('systemctl', 'status', 'zfs-import-scan')),
-                          CommandCaptureCommand(('systemctl', 'disable', 'zfs-import-scan')),
-                          CommandCaptureCommand(('systemctl', 'status', 'zfs-import-cache')),
-                          CommandCaptureCommand(('systemctl', 'disable', 'zfs-import-cache')),
-                          CommandCaptureCommand(('systemctl', 'status', 'zfs-mount')),
-                          CommandCaptureCommand(('systemctl', 'disable', 'zfs-mount')),
                           CommandCaptureCommand(('rpm', '-qi', 'spl'), stdout=self.rpm_qi_spl_stdout),
                           CommandCaptureCommand(('dkms', 'install', 'spl/1.2.3.4')),
                           CommandCaptureCommand(('modprobe', 'spl')),
