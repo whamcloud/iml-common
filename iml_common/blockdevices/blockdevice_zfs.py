@@ -535,26 +535,6 @@ class BlockDeviceZfs(BlockDevice):
                 error = 'Error preparing nodes for ZFS multimount protection. gethostid failed with %s' \
                         % result.stderr
 
-        def disable_if_exists(name):
-            status = Shell.run(['systemctl', 'status', name])
-
-            if status.rc != 4:
-                return Shell.run_canned_error_message([
-                    'systemctl',
-                    'disable',
-                    name
-                ])
-
-        if error is None:
-            error = reduce(
-                lambda x, y: x if x is not None else disable_if_exists(y),
-                ['zfs.target',
-                 'zfs-import-scan',
-                 'zfs-import-cache',
-                 'zfs-mount'],
-                None
-            )
-
         # https://github.com/zfsonlinux/zfs/issues/3801 describes a case where dkms will not rebuild zfs/spl in the
         # case of an upgrade. The command below ensures that dkms updates zfs/spl after our install which may have lead
         # to a kernel update.
