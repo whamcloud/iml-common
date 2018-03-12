@@ -2,18 +2,14 @@
 # Use of this source code is governed by a MIT-style
 # license that can be found in the LICENSE file.
 
-import os
 import errno
-import re
-import time
 import logging
-
+import os
+import re
 from collections import defaultdict
-from lockfile import LockFile, LockTimeout
 
-from ..lib.shell import Shell
 from blockdevice import BlockDevice
-from ..lib.util import pid_exists
+from ..lib.shell import Shell
 
 try:
     # FIXME: this should be avoided, implicit knowledge of something outside the package
@@ -26,191 +22,6 @@ except ImportError:
         handler.setFormatter(logging.Formatter("[%(asctime)s: %(levelname)s/%(name)s] %(message)s"))
         log.addHandler(handler)
         log.setLevel(logging.DEBUG)
-
-
-ZFS_OBJECT_STORE_PATH = '/var/lib/iml/zfs_store.json'
-
-
-def get_lockfile_pid(lockfile):
-    with open(lockfile, 'r') as f:
-        contents = f.readlines()
-
-    assert len(contents) == 1 and contents[0].isdigit(), \
-        'unexpected contents of lockfile %s: %s' % (lockfile, contents)
-
-    return int(contents[0])
-
-
-class ZfsDevice(object):
-    """
-    This provide two functions.
-
-    Function 1 is to provide locking so that within IML only a single access it made to a zpool device. This in itself
-    is not an issue but as code may import/export a device it provides that a zpool is not exported/imported whilst
-    something else is using it. It also means we can create atomic functions for zpool changes.
-
-    Function 2 is to provide for code to read the status, attributes etc of a zfs device that is not currently imported
-    to the machine. The code imports in read only mode and then exports the device whilst the enclosed code can then
-    operate on the device as if it was locally active.
-    """
-
-    ZPOOL_LOCK_DIR = '/var/lib/iml/zfs_locks'
-    LOCK_ACQUIRE_TIMEOUT = 10
-
-    lock_refcount = defaultdict(int)
-    locks_dir_initialized = False
-
-    def __init__(self, device_path, try_import):
-        """
-        :param device_path: Device path to lock the use of an potential import
-        :param try_import: If the device is not imported, import / export it (when used as with). If try_import is false
-        then the caller must deal with ensuring the device is accessible.
-        """
-        self.pool_path = device_path.split(os.path.sep)[0]
-
-        # Scope of a single process
-        self.lock = LockFile(os.path.join(self.ZPOOL_LOCK_DIR, self.pool_path))
-
-        # unique identifier used as key for reference counting lock calls on pool/thread/process
-        self.lock_unique_id = ':'.join([self.lock.unique_name, self.pool_path])
-        self.pool_imported = False
-        self.try_import = try_import
-        self.available = not try_import         # If we are not going to try to import it, then presume it is available
-
-    def __enter__(self):
-        self.lock_pool()
-
-        if self.try_import:
-            try:
-                imported_pools = Shell.try_run(["zpool", "list", "-H", "-o", "name"]).split('\n')
-            except:
-                self.unlock_pool()
-                raise
-
-            result = None
-
-            if self.pool_path not in imported_pools:
-                try:
-                    result = self.import_(False, True)
-
-                    if result is None:
-                        self.pool_imported = True
-                    else:
-                        log.error(result)
-                except:
-                    self.unlock_pool()
-                    raise
-
-            self.available = (result is None)
-
-        return self
-
-    def __exit__(self, type, value, traceback):
-        try:
-            if self.pool_imported is True:
-                result = self.export()
-
-                if result is not None:
-                    raise Shell.CommandExecutionError(Shell.RunResult(1, '', result, False),
-                                                      ['zpool import of %s' % self.pool_path])
-
-                self.pool_imported = False
-        finally:
-            self.unlock_pool()
-
-    def lock_pool(self):
-        """
-        Attempt to acquire a lock on a given zpool through a lockfile, increment the reference count each time
-        this method is called, regardless of whether acquire is actually called. Keep trying until we know
-        we are locking the zpool.
-
-        Lock acquire polls the timeout at intervals of LOCK_ACQUIRE_TIMEOUT.
-        """
-        if ZfsDevice.locks_dir_initialized is False:
-            # ensure lock directory exists
-            try:
-                os.makedirs(self.ZPOOL_LOCK_DIR)
-            except OSError:
-                pass
-
-            ZfsDevice.locks_dir_initialized = True
-
-        while not self.lock.i_am_locking():
-            try:
-                self.lock.acquire(self.LOCK_ACQUIRE_TIMEOUT)
-                with open(self.lock.lock_file, 'w') as f:
-                    f.writelines(str(self.lock.pid))
-            except LockTimeout:
-                # prune locks owned by non-existent processes
-                pid = get_lockfile_pid(self.lock.lock_file)
-
-                # validate pid holding lock exists
-                if not pid_exists(pid):
-                    self.lock.break_lock()
-                else:
-                    log.warning('lock acquire on lockfile %s timed out, lock owned by PID %s' % (self.lock.lock_file,
-                                                                                                 pid))
-            else:
-                Shell.run_canned_error_message(['udevadm', 'settle'])
-
-        self.lock_refcount[self.lock_unique_id] += 1
-
-    def unlock_pool(self):
-        """
-        Release the held lock, should only be called when holding the lock. Decrement the reference count
-        each time this method is called and release when reference count is equal to one.
-        """
-        self.lock_refcount[self.lock_unique_id] -= 1
-
-        if self.lock_refcount[self.lock_unique_id] == 0:
-            self.lock.release()
-
-    def import_(self, force, readonly):
-        """
-        This must be called when doing an import as it will lock the device before doing imports and ensure there is
-        no confusion about whether a device is import or not.
-
-        :return: None if OK else an error message.
-        """
-        self.lock_pool()
-
-        try:
-            return Shell.run_canned_error_message(['zpool', 'import'] +
-                                                  (['-f'] if force else []) +
-                                                  (['-N', '-o', 'readonly=on', '-o', 'cachefile=none'] if readonly else []) +
-                                                  [self.pool_path])
-        finally:
-            self.unlock_pool()
-
-    def export(self):
-        """
-        This must be called when doing an export as it will lock the device before doing imports and ensure there is
-        no confusion about whether a device is import or not.
-
-        Sometimes pools can be busy, in particular it seems when they are imported for short periods of time and then
-        exported. Perhaps ZFS is still doing some work on the pool. If the pool is busy retry, every 5 seconds for 1
-        minute
-
-        :return: None if OK else an error message.
-        """
-        self.lock_pool()
-
-        try:
-            timeout = (60 / 5)
-            result = None
-
-            while timeout > 0:
-                result = Shell.run_canned_error_message(['zpool', 'export', self.pool_path])
-
-                if result is None or ('pool is busy' not in result):
-                    return result
-
-                timeout -= 1
-                time.sleep(5)
-
-            return result
-        finally:
-            self.unlock_pool()
 
 
 class NotZpoolException(Exception):
@@ -254,21 +65,20 @@ class BlockDeviceZfs(BlockDevice):
         """
         self._assert_zpool('filesystem_info')
 
-        with ZfsDevice(self._device_path, False):
-            try:
-                device_names = Shell.try_run(['zfs', 'list', '-H', '-o', 'name', '-r', self._device_path]).split('\n')
+        try:
+            device_names = Shell.try_run(['zfs', 'list', '-H', '-o', 'name', '-r', self._device_path]).split('\n')
 
-                datasets = [line.split('/', 1)[1] for line in device_names if '/' in line]
+            datasets = [line.split('/', 1)[1] for line in device_names if '/' in line]
 
-                if datasets:
-                    return "Dataset%s '%s' found on zpool '%s'" % ('s' if (len(datasets) > 1) else '',
-                                                                   ','.join(datasets),
-                                                                   self._device_path)
-                return None
-            except OSError:                             # zfs not found
-                return "Unable to execute commands, check zfs is installed."
-            except Shell.CommandExecutionError as e:    # no zpool 'self._device_path' found
-                return str(e)
+            if datasets:
+                return "Dataset%s '%s' found on zpool '%s'" % ('s' if (len(datasets) > 1) else '',
+                                                               ','.join(datasets),
+                                                               self._device_path)
+            return None
+        except OSError:                             # zfs not found
+            return "Unable to execute commands, check zfs is installed."
+        except Shell.CommandExecutionError as e:    # no zpool 'self._device_path' found
+            return str(e)
 
     @property
     def filesystem_type(self):
@@ -292,9 +102,7 @@ class BlockDeviceZfs(BlockDevice):
         out = ""
 
         try:
-            with ZfsDevice(self._device_path, True) as zfs_device:
-                if zfs_device.available:
-                    out = Shell.try_run(['zfs', 'get', '-H', '-o', 'value', 'guid', self._device_path])
+            out = Shell.try_run(['zfs', 'get', '-H', '-o', 'value', 'guid', self._device_path])
         except OSError:                                     # Zfs not found.
             pass
 
@@ -318,8 +126,7 @@ class BlockDeviceZfs(BlockDevice):
 
             return blockdevice.failmode
         else:
-            with ZfsDevice(self._device_path, False):
-                return Shell.try_run(["zpool", "get", "-Hp", "failmode", self._device_path]).split()[2]
+            return Shell.try_run(["zpool", "get", "-Hp", "failmode", self._device_path]).split()[2]
 
     @failmode.setter
     def failmode(self, value):
@@ -330,8 +137,7 @@ class BlockDeviceZfs(BlockDevice):
 
             blockdevice.failmode = value
         else:
-            with ZfsDevice(self._device_path, False):
-                Shell.try_run(["zpool", "set", "failmode=%s" % value, self._device_path])
+            Shell.try_run(["zpool", "set", "failmode=%s" % value, self._device_path])
 
     def zfs_properties(self, reread, log=None):
         """
@@ -342,22 +148,18 @@ class BlockDeviceZfs(BlockDevice):
         :return: dictionary of zfs properties
         """
         if reread or not self._zfs_properties:
-            with ZfsDevice(self._device_path, True) as zfs_device:
-                self._zfs_properties = {}
+            self._zfs_properties = {}
 
-                if not zfs_device.available:
-                    return self._zfs_properties
+            ls = Shell.try_run(["zfs", "get", "-Hp", "-o", "property,value", "all", self._device_path])
 
-                ls = Shell.try_run(["zfs", "get", "-Hp", "-o", "property,value", "all", self._device_path])
-
-                for line in ls.split("\n"):
-                    try:
-                        key, value = line.split()
-                        self._zfs_properties[key] = value
-                    except ValueError:                              # Be resilient to things we don't understand.
-                        if log:
-                            log.info("zfs get for %s returned %s which was not parsable." % (self._device_path, line))
-                        pass
+            for line in ls.split("\n"):
+                try:
+                    key, value = line.split()
+                    self._zfs_properties[key] = value
+                except ValueError:                              # Be resilient to things we don't understand.
+                    if log:
+                        log.info("zfs get for %s returned %s which was not parsable." % (self._device_path, line))
+                    pass
 
         return self._zfs_properties
 
@@ -372,22 +174,18 @@ class BlockDeviceZfs(BlockDevice):
         self._assert_zpool('zpool_properties')
 
         if reread or not self._zpool_properties:
-            with ZfsDevice(self._device_path, True) as zfs_device:
-                self._zpool_properties = {}
+            self._zpool_properties = {}
 
-                if not zfs_device.available:
-                    return self._zpool_properties
+            ls = Shell.try_run(["zpool", "get", "-Hp", "all", self._device_path])
 
-                ls = Shell.try_run(["zpool", "get", "-Hp", "all", self._device_path])
-
-                for line in ls.strip().split("\n"):
-                    try:
-                        _, key, value, _ = line.split()
-                        self._zpool_properties[key] = value
-                    except ValueError:                              # Be resilient to things we don't understand.
-                        if log:
-                            log.info("zpool get for %s returned %s which was not parsable." % (self._device_path, line))
-                        pass
+            for line in ls.strip().split("\n"):
+                try:
+                    _, key, value, _ = line.split()
+                    self._zpool_properties[key] = value
+                except ValueError:                              # Be resilient to things we don't understand.
+                    if log:
+                        log.info("zpool get for %s returned %s which was not parsable." % (self._device_path, line))
+                    pass
 
         return self._zpool_properties
 
@@ -455,28 +253,30 @@ class BlockDeviceZfs(BlockDevice):
 
             return blockdevice.import_(pacemaker_ha_operation)
 
-        with ZfsDevice(self._device_path, False) as zfs_device:
-            result = zfs_device.import_(pacemaker_ha_operation, False)
+        result = Shell.run_canned_error_message(['zpool',
+                                                 'import',
+                                                 ['-f'] if pacemaker_ha_operation else [],
+                                                 self._device_path])
 
-            if result is not None and 'a pool with that name already exists' in result:
+        if result is not None and 'a pool with that name already exists' in result:
 
-                if self.zpool_properties(True).get('readonly') == 'on':
-                    # Zpool is already imported readonly. Export and re-import writeable.
-                    result = self.export()
+            if self.zpool_properties(True).get('readonly') == 'on':
+                # Zpool is already imported readonly. Export and re-import writeable.
+                result = self.export()
 
-                    if result is not None:
-                        return "zpool was imported readonly, and failed to export: '%s'" % result
+                if result is not None:
+                    return "zpool was imported readonly, and failed to export: '%s'" % result
 
-                    result = self.import_(pacemaker_ha_operation)
+                result = self.import_(pacemaker_ha_operation)
 
-                    if (result is None) and (self.zpool_properties(True).get('readonly') == 'on'):
-                        return 'zfs pool %s can only be imported readonly, is it in use?' % self._device_path
+                if (result is None) and (self.zpool_properties(True).get('readonly') == 'on'):
+                    return 'zfs pool %s can only be imported readonly, is it in use?' % self._device_path
 
-                else:
-                    # zpool is already imported and writable, nothing to do.
-                    return None
+            else:
+                # zpool is already imported and writable, nothing to do.
+                return None
 
-            return result
+        return result
 
     def export(self):
         """
@@ -496,14 +296,13 @@ class BlockDeviceZfs(BlockDevice):
 
             return blockdevice.export()
 
-        with ZfsDevice(self._device_path, False) as zfs_device:
-            result = zfs_device.export()
+        result = Shell.run_canned_error_message(['zpool', 'export', self._device_path])
 
-            if result is not None and 'no such pool' in result:
-                # Already not imported, nothing to do
-                return None
+        if result is not None and 'no such pool' in result:
+            # Already not imported, nothing to do
+            return None
 
-            return result
+        return result
 
     @classmethod
     def initialise_driver(cls, managed_mode):
@@ -513,16 +312,6 @@ class BlockDeviceZfs(BlockDevice):
         :return: None on success, error message on failure
         """
         error = None
-
-        # ensure lock directory exists
-        try:
-            os.makedirs(ZfsDevice.ZPOOL_LOCK_DIR)
-        except OSError:
-            pass
-
-        # create or truncate json store for zfs objects
-        with open(ZFS_OBJECT_STORE_PATH, 'a'):
-            pass
 
         if managed_mode is False:
             return error
@@ -565,22 +354,4 @@ class BlockDeviceZfs(BlockDevice):
 
     @classmethod
     def terminate_driver(cls):
-        """
-        Iterate through existing lockfiles and for each check if pid written into lock is THIS process' pid and
-        if so, remove lockfile. If no pid written into lockfile, ignore (linklockfiles).
-        """
-        lockfile_paths = [os.path.join(ZfsDevice.ZPOOL_LOCK_DIR, name) for name in os.listdir(ZfsDevice.ZPOOL_LOCK_DIR)]
-
-        def validate_or_remove(path):
-            try:
-                pid = get_lockfile_pid(path)
-            except AssertionError:
-                pass
-            else:
-                if os.getpid() == pid:
-                    os.remove(path)
-
-        # prune locks owned by THIS process
-        map(validate_or_remove, lockfile_paths)
-
         return None
