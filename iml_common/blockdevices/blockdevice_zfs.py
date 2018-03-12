@@ -253,10 +253,9 @@ class BlockDeviceZfs(BlockDevice):
 
             return blockdevice.import_(pacemaker_ha_operation)
 
-        result = Shell.run_canned_error_message(['zpool',
-                                                 'import',
-                                                 '-f' if pacemaker_ha_operation else '',
-                                                 self._device_path])
+        result = Shell.run_canned_error_message(['zpool', 'import'] +
+                                                 (['-f'] if pacemaker_ha_operation else []) +
+                                                 [self._device_path])
 
         if result is not None and 'a pool with that name already exists' in result:
 

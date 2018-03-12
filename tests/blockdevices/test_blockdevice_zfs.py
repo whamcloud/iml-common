@@ -156,7 +156,7 @@ kernel modules are functioning properly.
     def test_import_success_non_pacemaker(self):
         self.blockdevice = BlockDeviceZfs('zfs', self.dataset_path)
 
-        self.add_command(('zpool', 'import', '', self.pool_name))
+        self.add_command(('zpool', 'import', self.pool_name))
 
         self.assertIsNone(self.blockdevice.import_(False))
         self.assertRanAllCommandsInOrder()
@@ -164,7 +164,7 @@ kernel modules are functioning properly.
     def test_import_existing_readonly(self):
         props = re.sub(r'readonly\s+off', 'readonly    on', example_data.zpool_example_properties)
 
-        self.add_commands(CommandCaptureCommand(('zpool', 'import', '', self.pool_name),
+        self.add_commands(CommandCaptureCommand(('zpool', 'import', self.pool_name),
                                                 rc=1,
                                                 stderr="cannot import '%s': a pool with that name already exists\n"
                                                        "use the form 'zpool import <pool | id> <newpool>' to give it "
@@ -174,7 +174,7 @@ kernel modules are functioning properly.
                                                 stdout=props,
                                                 executions_remaining=1),
                           CommandCaptureCommand(('zpool', 'export', self.pool_name)),
-                          CommandCaptureCommand(('zpool', 'import', '', self.pool_name),
+                          CommandCaptureCommand(('zpool', 'import', self.pool_name),
                                                 executions_remaining=1),
                           CommandCaptureCommand(('zpool', 'get', '-Hp', 'all', self.pool_name),
                                                 stdout=example_data.zpool_example_properties))
@@ -195,7 +195,7 @@ kernel modules are functioning properly.
     def test_import_existing_non_pacemaker(self):
         self.blockdevice = BlockDeviceZfs('zfs', self.dataset_path)
 
-        self.add_commands(CommandCaptureCommand(('zpool', 'import', '', self.pool_name)))
+        self.add_commands(CommandCaptureCommand(('zpool', 'import', self.pool_name)))
 
         self.assertIsNone(self.blockdevice.import_(False))
         self.assertRanAllCommandsInOrder()
