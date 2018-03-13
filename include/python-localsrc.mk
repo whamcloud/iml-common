@@ -1,3 +1,5 @@
+BUILD_METHOD := Registry
+
 include include/git-versioning.mk
 
 ifeq ($(strip $(VERSION)),)
