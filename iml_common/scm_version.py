@@ -1,0 +1,4 @@
+VERSION = "1.3.3-2-g6affa06"
+PACKAGE_VERSION = "1.3.3"
+BUILD = ""
+IS_RELEASE = False

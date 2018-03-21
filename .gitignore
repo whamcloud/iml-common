@@ -6,3 +6,10 @@
 *.log
 .DS_Store
 .pytest_cache
+tags
+copr-local.mk
+_topdir/
+dist/
+iml_common.egg-info/
+scm_version.py.tmp
+python-iml-common*.src.rpm
