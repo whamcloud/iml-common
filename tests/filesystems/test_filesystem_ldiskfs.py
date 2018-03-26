@@ -23,6 +23,17 @@ class TestFileSystemLdiskfs(CommandCaptureTestCase):
 
         self.addCleanup(mock.patch.stopall)
 
+        patcher_time = mock.patch('time.time')
+        self.addCleanup(patcher_time.stop)
+        self.mock_time = patcher_time.start()
+        self.mock_time.return_value = 123.45
+
+        patcher_uname = mock.patch('os.uname')
+        self.addCleanup(patcher_uname.stop)
+        self.mock_uname = patcher_uname.start()
+        self.mock_uname.return_value = ('Linux', 'lotus-31vm4', '4.15.6-300.fc27.x86_64',
+                                        '#1 SMP Mon Feb 26 18:43:03 UTC 2018', 'x86_64')
+
     def test_initialize_modules(self):
         self.patch_init_modules.stop()
 
@@ -36,14 +47,32 @@ class TestFileSystemLdiskfs(CommandCaptureTestCase):
 
     def _mount_fail_initial(self, fail_code):
         """ Test when initial mount fails, retry succeeds and result returned """
+        self._mount_capture_setup_debug()
         self.add_commands(CommandCaptureCommand(('mount', '-t', 'lustre', '/dev/sda1', '/mnt/OST0000'), rc=fail_code,
                                                 executions_remaining=1),
                           CommandCaptureCommand(('mount', '-t', 'lustre', '/dev/sda1', '/mnt/OST0000'), rc=0,
                                                 executions_remaining=1))
+        self._mount_restore_debug()
 
         self.filesystem.mount('/mnt/OST0000')
 
         self.assertRanAllCommandsInOrder()
+
+    def _mount_capture_setup_debug(self):
+        self.add_commands(CommandCaptureCommand(('lctl', 'get_param', 'debug'), rc=0,
+                                                stdout="123", executions_remaining=1),
+                          CommandCaptureCommand(('lctl', 'get_param', 'debug_mb'), rc=0,
+                                                stdout="456", executions_remaining=1),
+                          CommandCaptureCommand(('lctl', 'set_param', 'debug=-1'), rc=0,
+                                                executions_remaining=1),
+                          CommandCaptureCommand(('lctl', 'set_param', 'debug_mb=400'), rc=0,
+                                                executions_remaining=1))
+
+    def _mount_restore_debug(self):
+        self.add_commands(CommandCaptureCommand(('lctl', 'set_param', 'debug=123'), rc=0,
+                                                executions_remaining=2),
+                          CommandCaptureCommand(('lctl', 'set_param', 'debug_mb=456'), rc=0,
+                                                executions_remaining=2))
 
     def test_mount_fail_initial_5(self):
         self._mount_fail_initial(5)
@@ -54,10 +83,22 @@ class TestFileSystemLdiskfs(CommandCaptureTestCase):
     def test_mount_fail_initial_2(self):
         self._mount_fail_initial(2)
 
+    def _mount_capture_debug_logs(self):
+        self.add_commands(CommandCaptureCommand(('lctl dk >/var/log/lustre-debug-final_mount-123.45.log',),
+                                                rc=0, executions_remaining=1),
+                          CommandCaptureCommand(('ssh', 'lotus-31vm5',
+                                                 'lctl dk >/var/log/lustre-debug-final_mount-123.45.log'),
+                                                rc=0, executions_remaining=1))
+
     def test_mount_different_rc_fail_initial(self):
-        """ Test when initial mount fails and the rc doesn't cause a retry, exception is raised """
-        self.add_commands(CommandCaptureCommand(('mount', '-t', 'lustre', '/dev/sda1', '/mnt/OST0000'), rc=1,
-                                                executions_remaining=1))
+        """ Test when initial mount fails and the rc doesn't cause a retry,
+            exception is raised """
+        self._mount_capture_setup_debug()
+        self.add_commands(CommandCaptureCommand(('mount', '-t', 'lustre',
+                                                 '/dev/sda1', '/mnt/OST0000'),
+                                                rc=1, executions_remaining=1))
+        self._mount_capture_debug_logs()
+        self._mount_restore_debug()
 
         self.assertRaises(RuntimeError, self.filesystem.mount, '/mnt/OST0000')
 
@@ -65,10 +106,13 @@ class TestFileSystemLdiskfs(CommandCaptureTestCase):
 
     def test_mount_fail_second(self):
         """ Test when initial mount fails and the retry fails, exception is raised """
+        self._mount_capture_setup_debug()
         self.add_commands(CommandCaptureCommand(('mount', '-t', 'lustre', '/dev/sda1', '/mnt/OST0000'), rc=5,
                                                 executions_remaining=1),
                           CommandCaptureCommand(('mount', '-t', 'lustre', '/dev/sda1', '/mnt/OST0000'), rc=5,
                                                 executions_remaining=1))
+        self._mount_capture_debug_logs()
+        self._mount_restore_debug()
 
         self.assertRaises(RuntimeError, self.filesystem.mount, '/mnt/OST0000')
 

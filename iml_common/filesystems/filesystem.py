@@ -6,6 +6,7 @@
 from ..lib import shell
 from ..lib import util
 import abc
+import time
 
 _cached_filesystem_types = {}
 
@@ -77,7 +78,33 @@ class FileSystem(object):
 
     def mount(self, mount_point):
         """ :return: Mount the file system, raise an exception on error. """
+
+        def ssh_mgs(cmd):
+            import os
+            myname = os.uname()[1]
+            dot_in_myname = myname.find('.')
+            if dot_in_myname > -1:
+                myname = myname[0:dot_in_myname]
+            mgs = myname[:-1] + "5"
+            shell.Shell.try_run(['ssh', mgs, cmd])
+
+        def create_lustre_debug_logs(operation=""):
+            if operation:
+                operation = "-%s" % operation
+            shell.Shell.try_run(['lctl dk >/var/log/lustre-debug%s-%s.log' %
+                                 (operation, time.time())], shell=True)
+            ssh_mgs('lctl dk >/var/log/lustre-debug%s-%s.log' % (operation, time.time()))
+
+        def set_debug_params(level, size):
+            shell.Shell.try_run(['lctl', 'set_param', 'debug=%s' % level])
+            shell.Shell.try_run(['lctl', 'set_param', 'debug_mb=%s' % size])
+
         self._initialize_modules()
+
+        prev_debug = shell.Shell.run(['lctl', 'get_param', 'debug']).stdout
+        prev_debug_mb = shell.Shell.run(['lctl', 'get_param', 'debug_mb']).stdout
+
+        set_debug_params("-1", "400")
 
         result = shell.Shell.run(['mount', '-t', 'lustre', self._device_path, mount_point])
 
@@ -88,7 +115,12 @@ class FileSystem(object):
             result = shell.Shell.run(['mount', '-t', 'lustre', self._device_path, mount_point])
 
         if result.rc != self.RC_MOUNT_SUCCESS:
-            raise RuntimeError("Error (%s) mounting '%s': '%s' '%s'" % (result.rc, mount_point, result.stdout, result.stderr))
+            create_lustre_debug_logs(operation="final_mount")
+            set_debug_params(prev_debug, prev_debug_mb)
+            raise RuntimeError("Error (%s) mounting '%s': '%s' '%s'" %
+                               (result.rc, mount_point, result.stdout, result.stderr))
+
+        set_debug_params(prev_debug, prev_debug_mb)
 
 
     def umount(self):
