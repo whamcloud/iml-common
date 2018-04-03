@@ -29,6 +29,7 @@ within the IML project.
 Summary:        %{summary}
 Requires:       python-lockfile = 1:0.9.1
 Obsoletes:      python2-iml-common1.3, python2-iml-common1.2, python2-iml-common1.1, python2-iml-common1.0
+Provides:       python2-iml-common1.3, python2-iml-common1.2, python2-iml-common1.1, python2-iml-common1.0
 
 %{?python_provide:%python_provide python2-%{pypi_name}}
 
