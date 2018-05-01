@@ -45,11 +45,8 @@ class BlockDeviceZfs(BlockDevice):
         self._zpool_properties = None
 
     def _initialize_modules(self):
-        if not self._modules_initialized:
-            Shell.try_run(['modprobe', 'osd_zfs'])
-            Shell.try_run(['modprobe', 'zfs'])
-
-            self._modules_initialized = True
+        Shell.try_run(['/usr/sbin/udevadm', 'info', '--path=/module/zfs'])
+        self._modules_initialized = True
 
     def _assert_zpool(self, caller_name):
         if '/' in self._device_path:
@@ -193,7 +190,11 @@ class BlockDeviceZfs(BlockDevice):
         return {}
 
     def targets(self, uuid_name_to_target, device, log):
-        self._initialize_modules()
+        try:
+            self._initialize_modules()
+        except Shell.CommandExecutionError:
+            log.info("zfs is not installed, skipping device %s" % device['path'])
+            return self.TargetsInfo([], None)
 
         if log:
             log.info("Searching device %s of type %s, uuid %s for a Lustre filesystem" % (device['path'],

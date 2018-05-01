@@ -224,7 +224,7 @@ class BlockDeviceLinux(BlockDevice):
         try:
             self._initialize_modules()
         except shell.Shell.CommandExecutionError:
-            log.info("ldiskfs is not installed, skipping device %s")
+            log.info("ldiskfs is not installed, skipping device %s" % device['path'])
             return self.TargetsInfo([], None)
 
         log.info("Searching device %s of type %s, uuid %s for a Lustre filesystem" % (device['path'], device['type'], device['uuid']))
