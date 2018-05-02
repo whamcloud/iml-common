@@ -58,7 +58,6 @@ class ZfsDevice(object):
     LOCK_ACQUIRE_TIMEOUT = 10
 
     lock_refcount = defaultdict(int)
-    locks_dir_initialized = False
 
     def __init__(self, device_path, try_import):
         """
@@ -126,15 +125,6 @@ class ZfsDevice(object):
 
         Lock acquire polls the timeout at intervals of LOCK_ACQUIRE_TIMEOUT.
         """
-        if ZfsDevice.locks_dir_initialized is False:
-            # ensure lock directory exists
-            try:
-                os.makedirs(self.ZPOOL_LOCK_DIR)
-            except OSError:
-                pass
-
-            ZfsDevice.locks_dir_initialized = True
-
         while not self.lock.i_am_locking():
             try:
                 self.lock.acquire(self.LOCK_ACQUIRE_TIMEOUT)

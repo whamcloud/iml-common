@@ -415,21 +415,3 @@ class TestZfsDeviceLockFile(TestZfsDevice):
         self.assertEqual(mock_kill.call_count, 1)
         self.assertEqual(contents, [str(zfs_device.lock.pid)])
         self.assertEqual(ZfsDevice.lock_refcount.get(zfs_device.lock_unique_id), 1)
-
-    def test_not_initialised(self):
-        """ check lock directory is initialised """
-        ZfsDevice.locks_dir_initialized = False
-        zfs_device = ZfsDevice(self.zpool_name, False)
-
-        mock_makedirs = mock.Mock()
-        with mock.patch('os.makedirs', mock_makedirs):
-            zfs_device.lock_pool()
-
-            mock_makedirs.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
-            mock_makedirs.reset_mock()
-
-            zfs_device.lock_pool()
-
-            mock_makedirs.assert_not_called()
-
-        ZfsDevice.locks_dir_initialized = False
