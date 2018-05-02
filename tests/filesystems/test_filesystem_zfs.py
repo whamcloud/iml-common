@@ -1,7 +1,7 @@
 import mock
 
 from iml_common.filesystems.filesystem_zfs import FileSystemZfs
-from iml_common.blockdevices.blockdevice_zfs import BlockDeviceZfs, ZfsDevice
+from iml_common.blockdevices.blockdevice_zfs import BlockDeviceZfs
 from iml_common.test.command_capture_testcase import CommandCaptureTestCase, CommandCaptureCommand
 
 
@@ -17,9 +17,6 @@ class TestFileSystemZFS(CommandCaptureTestCase):
         self.type_patcher = mock.patch.object(BlockDeviceZfs, 'filesystem_type', self.type_prop_mock)
         self.type_patcher.start()
 
-        mock.patch('iml_common.blockdevices.blockdevice_zfs.ZfsDevice.lock_pool').start()
-        mock.patch('iml_common.blockdevices.blockdevice_zfs.ZfsDevice.unlock_pool').start()
-
         self.patch_init_modules = mock.patch.object(FileSystemZfs, '_initialize_modules')
         self.patch_init_modules.start()
 
@@ -33,10 +30,6 @@ class TestFileSystemZFS(CommandCaptureTestCase):
     def test_devices_match(self):
         self.uuid_patcher.stop()
         self.type_patcher.stop()
-        mock_zfs_device = mock.MagicMock(autospec=ZfsDevice)
-        mock_zfs_device.available.return_value = True
-        mock_ZfsDevice = mock.Mock(return_value=mock_zfs_device)
-        mock.patch('iml_common.blockdevices.blockdevice_zfs.ZfsDevice', mock_ZfsDevice).start()
 
         self.add_commands(CommandCaptureCommand(('zfs', 'get', '-H', '-o', 'value', 'guid', 'zpool1'),
                                                 stdout='123456789123\n'))

@@ -3,7 +3,7 @@ import re
 import mock
 
 from os import path
-from iml_common.blockdevices.blockdevice_zfs import BlockDeviceZfs, ZfsDevice, ZFS_OBJECT_STORE_PATH
+from iml_common.blockdevices.blockdevice_zfs import BlockDeviceZfs
 from tests.blockdevices.blockdevice_base_tests import BaseTestBD
 from tests.data import example_data
 from iml_common.test.command_capture_testcase import CommandCaptureCommand
@@ -67,8 +67,6 @@ kernel modules are functioning properly.
 
         self.mock_makedirs = mock.Mock()
         self.mock_remove = mock.Mock()
-        mock.patch('iml_common.blockdevices.blockdevice_zfs.ZfsDevice.lock_pool').start()
-        mock.patch('iml_common.blockdevices.blockdevice_zfs.ZfsDevice.unlock_pool').start()
         mock.patch('os.makedirs', self.mock_makedirs).start()
         mock.patch('os.remove', self.mock_remove).start()
         self.patch_init_modules = mock.patch.object(BlockDeviceZfs, '_initialize_modules')
@@ -137,10 +135,8 @@ kernel modules are functioning properly.
         self.assertRanAllCommandsInOrder()
 
     def test_uuid(self):
-        self.add_commands(CommandCaptureCommand(('zpool', 'list', '-H', '-o', 'name'),
-                                                stdout=self.blockdevice._device_path),
-                          CommandCaptureCommand(('zfs', 'get', '-H', '-o', 'value', 'guid', self.blockdevice._device_path),
-                                                stdout='169883839435093209\n'))
+        self.add_command(('zfs', 'get', '-H', '-o', 'value', 'guid', self.blockdevice._device_path),
+                         stdout='169883839435093209\n')
 
         self.assertEqual('169883839435093209', self.blockdevice.uuid)
         self.assertRanAllCommandsInOrder()
@@ -160,7 +156,7 @@ kernel modules are functioning properly.
     def test_import_success_non_pacemaker(self):
         self.blockdevice = BlockDeviceZfs('zfs', self.dataset_path)
 
-        self.add_commands(CommandCaptureCommand(('zpool', 'import', self.pool_name)))
+        self.add_command(('zpool', 'import', self.pool_name))
 
         self.assertIsNone(self.blockdevice.import_(False))
         self.assertRanAllCommandsInOrder()
@@ -174,16 +170,12 @@ kernel modules are functioning properly.
                                                        "use the form 'zpool import <pool | id> <newpool>' to give it "
                                                        "a new name\n",
                                                 executions_remaining=1),
-                          CommandCaptureCommand(('zpool', 'list', '-H', '-o', 'name'),
-                                                stdout='%s\n' % self.pool_name),
                           CommandCaptureCommand(('zpool', 'get', '-Hp', 'all', self.pool_name),
                                                 stdout=props,
                                                 executions_remaining=1),
                           CommandCaptureCommand(('zpool', 'export', self.pool_name)),
                           CommandCaptureCommand(('zpool', 'import', self.pool_name),
                                                 executions_remaining=1),
-                          CommandCaptureCommand(('zpool', 'list', '-H', '-o', 'name'),
-                                                stdout='%s\n' % self.pool_name),
                           CommandCaptureCommand(('zpool', 'get', '-Hp', 'all', self.pool_name),
                                                 stdout=example_data.zpool_example_properties))
 
@@ -195,7 +187,7 @@ kernel modules are functioning properly.
     def test_import_success_with_pacemaker(self):
         self.blockdevice = BlockDeviceZfs('zfs', self.dataset_path)
 
-        self.add_commands(CommandCaptureCommand(('zpool', 'import', '-f', self.blockdevice._device_path.split('/')[0])))
+        self.add_command(('zpool', 'import', '-f', self.blockdevice._device_path.split('/')[0]))
 
         self.assertIsNone(self.blockdevice.import_(True))
         self.assertRanAllCommandsInOrder()
@@ -230,10 +222,8 @@ kernel modules are functioning properly.
     def test_property_values(self):
         self.blockdevice = BlockDeviceZfs('zfs', self.dataset_path)
 
-        self.add_commands(CommandCaptureCommand(('zpool', 'list', '-H', '-o', 'name'),
-                                                stdout='%s\n' % self.pool_name),
-                          CommandCaptureCommand(('zfs', 'get', '-Hp', '-o', 'property,value', 'all', self.blockdevice._device_path),
-                                                stdout=example_data.zfs_example_properties))
+        self.add_command(('zfs', 'get', '-Hp', '-o', 'property,value', 'all', self.blockdevice._device_path),
+                         stdout=example_data.zfs_example_properties)
 
         zfs_properties = self.blockdevice.zfs_properties(False)
 
@@ -245,10 +235,8 @@ kernel modules are functioning properly.
     def test_targets(self):
         self.blockdevice = BlockDeviceZfs('zfs', self.dataset_path)
 
-        self.add_commands(CommandCaptureCommand(('zpool', 'list', '-H', '-o', 'name'),
-                                                stdout='%s\n' % self.pool_name),
-                          CommandCaptureCommand(('zfs', 'get', '-Hp', '-o', 'property,value', 'all', self.blockdevice._device_path),
-                                                stdout=example_data.zfs_example_properties))
+        self.add_command(('zfs', 'get', '-Hp', '-o', 'property,value', 'all', self.blockdevice._device_path),
+                         stdout=example_data.zfs_example_properties)
 
         target_info = self.blockdevice.targets(None, None, None)
 
@@ -281,8 +269,6 @@ kernel modules are functioning properly.
         with mock.patch.object(path, 'isfile', return_value=False):
             result = BlockDeviceZfs.initialise_driver(True)
 
-        self.mock_makedirs.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
-        self.mock_open.assert_called_once_with(ZFS_OBJECT_STORE_PATH, 'a')
         self.assertEqual(result, None)
         self.assertRanAllCommandsInOrder()
 
@@ -297,8 +283,6 @@ kernel modules are functioning properly.
         with mock.patch.object(path, 'isfile', return_value=True):
             result = BlockDeviceZfs.initialise_driver(True)
 
-        self.mock_makedirs.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
-        self.mock_open.assert_called_once_with(ZFS_OBJECT_STORE_PATH, 'a')
         self.assertEqual(result, None)
         self.assertRanAllCommandsInOrder()
 
@@ -308,8 +292,6 @@ kernel modules are functioning properly.
         with mock.patch.object(path, 'isfile', return_value=False):
             result = BlockDeviceZfs.initialise_driver(True)
 
-        self.mock_makedirs.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
-        self.mock_open.assert_called_once_with(ZFS_OBJECT_STORE_PATH, 'a')
         self.assertIn('sample genhostid error text', result)
         self.assertRanAllCommandsInOrder()
 
@@ -321,8 +303,6 @@ kernel modules are functioning properly.
         with mock.patch.object(path, 'isfile', return_value=False):
             result = BlockDeviceZfs.initialise_driver(True)
 
-        self.mock_makedirs.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
-        self.mock_open.assert_called_once_with(ZFS_OBJECT_STORE_PATH, 'a')
         self.assertIn('sample dkms error text', result)
         self.assertRanAllCommandsInOrder()
 
@@ -337,8 +317,6 @@ kernel modules are functioning properly.
         with mock.patch.object(path, 'isfile', return_value=False):
             result = BlockDeviceZfs.initialise_driver(True)
 
-        self.mock_makedirs.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
-        self.mock_open.assert_called_once_with(ZFS_OBJECT_STORE_PATH, 'a')
         self.assertIn('sample dkms error text', result)
         self.assertRanAllCommandsInOrder()
 
@@ -354,64 +332,11 @@ kernel modules are functioning properly.
         with mock.patch.object(path, 'isfile', return_value=False):
             result = BlockDeviceZfs.initialise_driver(True)
 
-        self.mock_makedirs.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
-        self.mock_open.assert_called_once_with(ZFS_OBJECT_STORE_PATH, 'a')
         self.assertIn('sample modprobe error text', result)
         self.assertRanAllCommandsInOrder()
 
     def test_initialise_driver_monitor_mode(self):
         result = BlockDeviceZfs.initialise_driver(False)
 
-        self.mock_makedirs.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
-        self.mock_open.assert_called_once_with(ZFS_OBJECT_STORE_PATH, 'a')
         self.assertEqual(result, None)
         self.assertRanAllCommandsInOrder()
-
-    def _base_terminate_driver_test(self, getpid_retval, listdir_retval, lockfilepid_retval):
-        mock_getpid = mock.Mock(return_value=getpid_retval)
-        mock.patch('os.getpid', mock_getpid).start()
-        mock_listdir = mock.Mock(return_value=listdir_retval)
-        mock.patch('os.listdir', mock_listdir).start()
-        mock_lockfilepid = mock.Mock(return_value=lockfilepid_retval)
-        mock.patch('iml_common.blockdevices.blockdevice_zfs.get_lockfile_pid', mock_lockfilepid).start()
-
-        result = BlockDeviceZfs.terminate_driver()
-
-        self.assertEqual(result, None)
-
-        return mock_getpid, mock_listdir, mock_lockfilepid
-
-    def test_terminate_driver_active_locks_this_process(self):
-        mock_getpid, mock_listdir, mock_lockfilepid = self._base_terminate_driver_test(1234,
-                                                                                                    ['pool1'],
-                                                                                                    1234)
-        mock_getpid.assert_called_once_with()
-        mock_listdir.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
-        mock_lockfilepid.assert_called_once_with('%s/pool1' % ZfsDevice.ZPOOL_LOCK_DIR)
-        self.mock_remove.assert_called_once_with('%s/pool1' % ZfsDevice.ZPOOL_LOCK_DIR)
-
-    def test_terminate_driver_active_locks_other_process(self):
-        mock_getpid, mock_listdir, mock_lockfilepid = self._base_terminate_driver_test(1233,
-                                                                                                    ['pool1'],
-                                                                                                    1234)
-        mock_getpid.assert_called_once_with()
-        mock_listdir.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
-        mock_lockfilepid.assert_called_once_with('%s/pool1' % ZfsDevice.ZPOOL_LOCK_DIR)
-        self.mock_remove.assert_not_called()
-
-    def test_terminate_driver_file_with_no_pid(self):
-        mock_getpid = mock.Mock(return_value=1234)
-        mock.patch('os.getpid', mock_getpid).start()
-        mock_listdir = mock.Mock(return_value=['pool1'])
-        mock.patch('os.listdir', mock_listdir).start()
-        mock_lockfilepid = mock.Mock(side_effect=AssertionError)
-        mock.patch('iml_common.blockdevices.blockdevice_zfs.get_lockfile_pid', mock_lockfilepid).start()
-
-        result = BlockDeviceZfs.terminate_driver()
-
-        self.assertEqual(result, None)
-
-        assert mock_getpid.call_args_list == []
-        mock_listdir.assert_called_once_with(ZfsDevice.ZPOOL_LOCK_DIR)
-        mock_lockfilepid.assert_called_once_with('%s/pool1' % ZfsDevice.ZPOOL_LOCK_DIR)
-        self.mock_remove.assert_not_called()

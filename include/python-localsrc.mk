@@ -1,5 +1,3 @@
-BUILD_METHOD := Registry
-
 include include/git-versioning.mk
 
 ifeq ($(strip $(VERSION)),)
@@ -17,9 +15,9 @@ include include/python-common.mk
 include include/rpm-common.mk
 include include/copr.mk
 
-# should always remove the sources if DIST_VERSION was set
+# should always remove the tarball sources if DIST_VERSION was set
 ifneq ($(DIST_VERSION),$(PACKAGE_VERSION))
-    $(shell rm -f $(RPM_SOURCES))
+    $(shell rm -f $(word 1,$(RPM_SOURCES)))
 endif
 
 %.egg-info/SOURCES.txt: install_build_deps-stamp

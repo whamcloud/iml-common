@@ -1,4 +1,5 @@
-RPM_SPEC      ?= $(NAME).spec
+RPM_SPEC		?= $(NAME).spec
+RPMLINT_REQUIRED	?= true
 
 CLEAN += _topdir
 DISTCLEAN += dist
@@ -99,7 +100,13 @@ build_test: $(TARGET_SRPM)
 #include rpm_deps
 
 rpmlint: $(RPM_SPEC)
-	rpmlint $<
+	if ! rpmlint $<; then                                  \
+	    if ! $(RPMLINT_REQUIRED); then                     \
+	        echo "rpmlint not required, skipping failure"; \
+	    else                                               \
+	        exit 1;                                        \
+	    fi;                                                \
+	fi
 
 tags:
 	ctags -R .

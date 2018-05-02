@@ -1,20 +1,18 @@
+VERSION := $(shell repoquery --disablerepo=\* --enablerepo=$(REPO) -q --qf "%{version}" $(NAME) | sed -e 's/.el7//g')
+RELEASE := $(shell repoquery --disablerepo=\* --enablerepo=$(REPO) -q --qf "%{release}" $(NAME) | sed -e 's/.el7//g')
+
+PACKAGE_VERSION := $(VERSION)
+PACKAGE_RELEASE := $(RELEASE).01
+
 include include/rpm-common.mk
 include include/copr.mk
 
-VERSION_RELEASE := $(shell repoquery -q --qf "%{version}-%{release}" $(NAME) | sed -e 's/.el7//g')
-SRPM            := $(NAME)-$(VERSION_RELEASE).el7.src.rpm
+SRPM            := $(NAME)-$(VERSION)-$(RELEASE).el7.src.rpm
 
 $(SRPM):
-	yumdownloader --source $(NAME)
+	yumdownloader --disablerepo=\* --enablerepo=$(REPO) --source $(NAME)
 
 unpack: $(SRPM)
-	#if [ -d old ]; then                          \
-	#    echo "directory old already exists."     \
-	#         "please clean it up and try again"; \
-	#    exit 1;                                  \
-	#fi
-	#mkdir old
-	#mv $$(ls | egrep -v -e ^old$$ -e ^Makefile$$) old
 	rpm2cpio < $(SRPM) | cpio -iu
 
 download: $(SRPM)
@@ -28,6 +26,13 @@ $(RPM_SOURCES):
 	fi
 
 install_build_deps:
-	echo "Nothing to do"
+	if [ "$(REPO)" = "epel" ]; then                                                     \
+	    if ! rpm -q epel-release; then                                                  \
+	        yum -y install                                                              \
+	            https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm; \
+	    fi;                                                                             \
+	else                                                                                \
+	    echo "Nothing to do";                                                           \
+	fi
 
 .PHONY: unpack download install_build_deps
