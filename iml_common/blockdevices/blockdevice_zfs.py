@@ -147,16 +147,16 @@ class BlockDeviceZfs(BlockDevice):
         if reread or not self._zfs_properties:
             self._zfs_properties = {}
 
-            ls = Shell.try_run(["zfs", "get", "-Hp", "-o", "property,value", "all", self._device_path])
+            result = Shell.run(["zfs", "get", "-Hp", "-o", "property,value", "all", self._device_path])
 
-            for line in ls.split("\n"):
-                try:
-                    key, value = line.split()
-                    self._zfs_properties[key] = value
-                except ValueError:                              # Be resilient to things we don't understand.
-                    if log:
-                        log.info("zfs get for %s returned %s which was not parsable." % (self._device_path, line))
-                    pass
+            if result.rc == 0:
+                for line in result.stdout.split("\n"):
+                    try:
+                        key, value = line.split()
+                        self._zfs_properties[key] = value
+                    except ValueError:                              # Be resilient to things we don't understand.
+                        if log:
+                            log.info("zfs get for %s returned %s which was not parsable." % (self._device_path, line))
 
         return self._zfs_properties
 
