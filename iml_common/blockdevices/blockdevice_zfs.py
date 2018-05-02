@@ -2,7 +2,6 @@
 # Use of this source code is governed by a MIT-style
 # license that can be found in the LICENSE file.
 
-import errno
 import logging
 import os
 import re
@@ -307,50 +306,17 @@ class BlockDeviceZfs(BlockDevice):
     @classmethod
     def initialise_driver(cls, managed_mode):
         """
-        Enable SPL Multi-Mount Protection for ZFS during failover by generating a hostid to be used by Lustre.
+        SPL Multi-Mount Protection for ZFS requires a hostid
 
         :return: None on success, error message on failure
         """
-        error = None
-
-        if managed_mode is False:
-            return error
-
-        if os.path.isfile('/etc/hostid') is False:
+        if managed_mode and os.path.isfile('/etc/hostid') is False:
             # only create an ID if one doesn't already exist
             result = Shell.run(['genhostid'])
 
             if result.rc != 0:
-                error = 'Error preparing nodes for ZFS multimount protection. gethostid failed with %s' \
-                        % result.stderr
-
-        # https://github.com/zfsonlinux/zfs/issues/3801 describes a case where dkms will not rebuild zfs/spl in the
-        # case of an upgrade. The command below ensures that dkms updates zfs/spl after our install which may have lead
-        # to a kernel update.
-        if error is None:
-            for install_package in ['spl', 'zfs']:
-                result = Shell.run(['rpm', '-qi', install_package])
-
-                # If we get an error there is no package so nothing to do.
-                if result.rc == 0:
-                    try:
-                        version = next((line.split()[2] for line in result.stdout.split('\n') if line.split()[0] == 'Version'), None)
-                    except IndexError:
-                            version = None                     # Malformed output so we can't fetch the version.
-
-                    if version is not None:
-                        try:
-                            error = Shell.run_canned_error_message(['dkms', 'install', '%s/%s' % (install_package, version)])
-
-                            if error is None:
-                                error = Shell.run_canned_error_message(['modprobe', install_package])
-                        except OSError as e:
-                            if e.errno != errno.ENOENT:
-                                error = 'Error running "dkms install %s/%s" error return %s' % (install_package, version, e.errno)
-                if error:
-                    break
-
-        return error
+                return 'Error preparing nodes for ZFS multimount protection. gethostid failed with %s' \
+                       % result.stderr
 
     @classmethod
     def terminate_driver(cls):

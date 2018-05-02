@@ -257,29 +257,9 @@ kernel modules are functioning properly.
         self.assertRanAllCommandsInOrder()
 
     def test_initialise_driver(self):
-        self.add_commands(CommandCaptureCommand(('genhostid',)),
-                          CommandCaptureCommand(('rpm', '-qi', 'spl'), stdout=self.rpm_qi_spl_stdout),
-                          CommandCaptureCommand(('dkms', 'install', 'spl/1.2.3.4')),
-                          CommandCaptureCommand(('modprobe', 'spl')),
-                          CommandCaptureCommand(('rpm', '-qi', 'zfs'), stdout=self.rpm_qi_zfs_stdout),
-                          CommandCaptureCommand(('dkms', 'install', 'zfs/0.6.5.7')),
-                          CommandCaptureCommand(('modprobe', 'zfs')))
+        self.add_commands(CommandCaptureCommand(('genhostid',)))
 
         with mock.patch.object(path, 'isfile', return_value=False):
-            result = BlockDeviceZfs.initialise_driver(True)
-
-        self.assertEqual(result, None)
-        self.assertRanAllCommandsInOrder()
-
-    def test_initialise_driver_file_exists(self):
-        self.add_commands(CommandCaptureCommand(('rpm', '-qi', 'spl'), stdout=self.rpm_qi_spl_stdout),
-                          CommandCaptureCommand(('dkms', 'install', 'spl/1.2.3.4')),
-                          CommandCaptureCommand(('modprobe', 'spl')),
-                          CommandCaptureCommand(('rpm', '-qi', 'zfs'), stdout=self.rpm_qi_zfs_stdout),
-                          CommandCaptureCommand(('dkms', 'install', 'zfs/0.6.5.7')),
-                          CommandCaptureCommand(('modprobe', 'zfs')))
-
-        with mock.patch.object(path, 'isfile', return_value=True):
             result = BlockDeviceZfs.initialise_driver(True)
 
         self.assertEqual(result, None)
@@ -292,46 +272,6 @@ kernel modules are functioning properly.
             result = BlockDeviceZfs.initialise_driver(True)
 
         self.assertIn('sample genhostid error text', result)
-        self.assertRanAllCommandsInOrder()
-
-    def test_initialise_driver_fail_dkms_spl(self):
-        self.add_commands(CommandCaptureCommand(('genhostid',)),
-                          CommandCaptureCommand(('rpm', '-qi', 'spl'), stdout=self.rpm_qi_spl_stdout),
-                          CommandCaptureCommand(('dkms', 'install', 'spl/1.2.3.4'), rc=1, stderr='sample dkms error text'))
-
-        with mock.patch.object(path, 'isfile', return_value=False):
-            result = BlockDeviceZfs.initialise_driver(True)
-
-        self.assertIn('sample dkms error text', result)
-        self.assertRanAllCommandsInOrder()
-
-    def test_initialise_driver_fail_dkms_zfs(self):
-        self.add_commands(CommandCaptureCommand(('genhostid',)),
-                          CommandCaptureCommand(('rpm', '-qi', 'spl'), stdout=self.rpm_qi_spl_stdout),
-                          CommandCaptureCommand(('dkms', 'install', 'spl/1.2.3.4')),
-                          CommandCaptureCommand(('modprobe', 'spl')),
-                          CommandCaptureCommand(('rpm', '-qi', 'zfs'), stdout=self.rpm_qi_zfs_stdout),
-                          CommandCaptureCommand(('dkms', 'install', 'zfs/0.6.5.7'), rc=1, stderr='sample dkms error text'))
-
-        with mock.patch.object(path, 'isfile', return_value=False):
-            result = BlockDeviceZfs.initialise_driver(True)
-
-        self.assertIn('sample dkms error text', result)
-        self.assertRanAllCommandsInOrder()
-
-    def test_initialise_driver_fail_modprobe_zfs(self):
-        self.add_commands(CommandCaptureCommand(('genhostid',)),
-                          CommandCaptureCommand(('rpm', '-qi', 'spl'), stdout=self.rpm_qi_spl_stdout),
-                          CommandCaptureCommand(('dkms', 'install', 'spl/1.2.3.4')),
-                          CommandCaptureCommand(('modprobe', 'spl')),
-                          CommandCaptureCommand(('rpm', '-qi', 'zfs'), stdout=self.rpm_qi_zfs_stdout),
-                          CommandCaptureCommand(('dkms', 'install', 'zfs/0.6.5.7')),
-                          CommandCaptureCommand(('modprobe', 'zfs'), rc=1, stderr='sample modprobe error text'))
-
-        with mock.patch.object(path, 'isfile', return_value=False):
-            result = BlockDeviceZfs.initialise_driver(True)
-
-        self.assertIn('sample modprobe error text', result)
         self.assertRanAllCommandsInOrder()
 
     def test_initialise_driver_monitor_mode(self):
