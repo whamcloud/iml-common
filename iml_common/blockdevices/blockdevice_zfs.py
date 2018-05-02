@@ -45,11 +45,8 @@ class BlockDeviceZfs(BlockDevice):
         self._zpool_properties = None
 
     def _initialize_modules(self):
-        if not self._modules_initialized:
-            Shell.try_run(['modprobe', 'osd_zfs'])
-            Shell.try_run(['modprobe', 'zfs'])
-
-            self._modules_initialized = True
+        Shell.try_run(['/usr/sbin/udevadm', 'info', '--path=/module/zfs'])
+        self._modules_initialized = True
 
     def _assert_zpool(self, caller_name):
         if '/' in self._device_path:
@@ -150,16 +147,16 @@ class BlockDeviceZfs(BlockDevice):
         if reread or not self._zfs_properties:
             self._zfs_properties = {}
 
-            ls = Shell.try_run(["zfs", "get", "-Hp", "-o", "property,value", "all", self._device_path])
+            result = Shell.run(["zfs", "get", "-Hp", "-o", "property,value", "all", self._device_path])
 
-            for line in ls.split("\n"):
-                try:
-                    key, value = line.split()
-                    self._zfs_properties[key] = value
-                except ValueError:                              # Be resilient to things we don't understand.
-                    if log:
-                        log.info("zfs get for %s returned %s which was not parsable." % (self._device_path, line))
-                    pass
+            if result.rc == 0:
+                for line in result.stdout.split("\n"):
+                    try:
+                        key, value = line.split()
+                        self._zfs_properties[key] = value
+                    except ValueError:                              # Be resilient to things we don't understand.
+                        if log:
+                            log.info("zfs get for %s returned %s which was not parsable." % (self._device_path, line))
 
         return self._zfs_properties
 
@@ -193,7 +190,11 @@ class BlockDeviceZfs(BlockDevice):
         return {}
 
     def targets(self, uuid_name_to_target, device, log):
-        self._initialize_modules()
+        try:
+            self._initialize_modules()
+        except Shell.CommandExecutionError:
+            log.info("zfs is not installed, skipping device %s" % device['path'])
+            return self.TargetsInfo([], None)
 
         if log:
             log.info("Searching device %s of type %s, uuid %s for a Lustre filesystem" % (device['path'],
