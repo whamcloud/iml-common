@@ -83,8 +83,7 @@ kernel modules are functioning properly.
     def test_initialize_modules(self):
         self.patch_init_modules.stop()
 
-        self.add_commands(CommandCaptureCommand(('modprobe', 'osd_zfs')),
-                          CommandCaptureCommand(('modprobe', 'zfs')))
+        self.add_commands(CommandCaptureCommand(('/usr/sbin/udevadm', 'info', '--path=/module/zfs')))
 
         self.blockdevice._initialize_modules()
         self.assertTrue(self.blockdevice._modules_initialized)
