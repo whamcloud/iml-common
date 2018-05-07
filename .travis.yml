@@ -33,6 +33,7 @@ jobs:
   - stage: deploy-copr
     if: branch =~ ^v\d+\.\d+\.\d+-.+$
     env: Type='Copr deploy'
+    script: skip
     before_deploy:
     - include/travis/copr-deploy.sh prepare
     deploy:
