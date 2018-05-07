@@ -108,9 +108,6 @@ rpmlint: $(RPM_SPEC)
 	    fi;                                                \
 	fi
 
-tags:
-	ctags -R .
-
 .PHONY: rpms srpm test test_dependencies build_test dist develop \
 	all genfiles setuphooks rpmlint
 

@@ -79,3 +79,6 @@ install_build_deps-stamp:
 	touch $@
 
 include deps
+
+tags: deps
+	ctags --python-kinds=-i -R --exclude=_topdir
