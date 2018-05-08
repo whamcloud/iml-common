@@ -72,6 +72,9 @@ mv %{pypi_name}-%{version} %{rpm_name}-%{version}
 %{python2_sitelib}/%(a=%{pypi_name}; echo ${a//-/_})-*.egg-info/*
 
 %changelog
+* Tue May 8 2018 Joe Grund <joe.grund@intel.com> 1.4.2-1
+- Add back missing commit.
+
 * Tue Mar 13 2018 Joe Grund <joe.grund@intel.com> 1.4.1-1
 - include missing files.
 
