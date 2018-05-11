@@ -24,8 +24,6 @@ BuildArch:      noarch
 BuildRequires:  python2-devel
 BuildRequires:  python-setuptools
 
-Requires:       python-lockfile==0.9.1
-
 %description
 A Python package that contains common components for the IML project Different
 areas of the IML project utilise common code that is shared distributed through
