@@ -178,47 +178,6 @@ class ServiceControl(object):
     def _stop(self):
         raise NotImplementedError
 
-
-class ServiceControlEL6(ServiceControl):
-
-    platform_use = '6'
-
-    @property
-    def running(self):
-        # Returns True if the service is running. "service servicename status"
-        return shell.Shell.run(['/sbin/service', self.service_name, 'status']).rc == 0
-
-    @property
-    def enabled(self):
-        # Returns True if the service is enabled. "chkconfig servicename"
-        return shell.Shell.run(['/sbin/chkconfig', self.service_name]).rc == 0
-
-    @classmethod
-    def _applicable(cls):
-        return util.platform_info.system == 'Linux' and \
-               cls.platform_use == util.platform_info.distro_version_full.split('.')[0]
-
-    @classmethod
-    def daemon_reload(cls):
-        pass
-
-    def enable(self):
-        return shell.Shell.run_canned_error_message(['/sbin/chkconfig', '--add', self.service_name]) or \
-               shell.Shell.run_canned_error_message(['/sbin/chkconfig', self.service_name, 'on'])
-
-    def reload(self):
-        return shell.Shell.run_canned_error_message(['/sbin/service', self.service_name, 'reload'])
-
-    def disable(self):
-        return shell.Shell.run_canned_error_message(['/sbin/chkconfig', self.service_name, 'off'])
-
-    def _start(self):
-        return shell.Shell.run_canned_error_message(['/sbin/service', self.service_name, 'start'])
-
-    def _stop(self):
-        return shell.Shell.run_canned_error_message(['/sbin/service', self.service_name, 'stop'])
-
-
 class ServiceControlEL7(ServiceControl):
 
     platform_use = '7'
@@ -256,14 +215,3 @@ class ServiceControlEL7(ServiceControl):
 
     def _stop(self):
         return shell.Shell.run_canned_error_message(['systemctl', 'stop', self.service_name])
-
-
-class ServiceControlOSX(ServiceControlEL6):
-    """ Just a stub class so that running on OSX things can be made to work.
-
-    We make OSX behave like EL6 because that historically is what happened. So
-    this class provides for backwards compatibility.
-    """
-    @classmethod
-    def _applicable(cls):
-        return platform.system() == 'Darwin'
