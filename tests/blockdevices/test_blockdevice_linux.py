@@ -9,21 +9,19 @@ class TestBlockDeviceLinux(BaseTestBD.BaseTestBlockDevice):
     def setUp(self):
         super(TestBlockDeviceLinux, self).setUp()
 
-        self.patch_init_modules = mock.patch.object(BlockDeviceLinux, '_initialize_modules')
+        self.patch_init_modules = mock.patch.object(BlockDeviceLinux, '_check_module')
         self.patch_init_modules.start()
 
         self.blockdevice = BlockDeviceLinux('linux', '/dev/sda1')
 
         self.addCleanup(mock.patch.stopall)
 
-    def test_initialize_modules(self):
+    def test_check_module(self):
         self.patch_init_modules.stop()
 
-        self.add_commands(CommandCaptureCommand(('modprobe', 'osd_ldiskfs'), rc=1),
-                          CommandCaptureCommand(('modprobe', 'ldiskfs')))
+        self.add_commands(CommandCaptureCommand(('/usr/sbin/udevadm', 'info', '--path=/module/ldiskfs')))
 
-        self.blockdevice._initialize_modules()
-        self.assertTrue(self.blockdevice._modules_initialized)
+        self.blockdevice._check_module()
 
         self.assertRanAllCommandsInOrder()
 

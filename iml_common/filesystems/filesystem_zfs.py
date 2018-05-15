@@ -14,7 +14,6 @@ class FileSystemZfs(FileSystem, BlockDeviceZfs):
     def __init__(self, fstype, device_path):
         super(FileSystemZfs, self).__init__(fstype, device_path)
 
-        self._modules_initialized = False
         self._zfs_properties = None
 
     @property
@@ -52,7 +51,7 @@ class FileSystemZfs(FileSystem, BlockDeviceZfs):
         :param options: list of options to supply to mkfs command
         :return: dict of new target info
         """
-        self._initialize_modules()
+        self._check_module()
 
         # set 'failmode=panic' property on underlying device (zpool)
         BlockDeviceZfs('zfs', self._device_path).failmode = 'panic'

@@ -10,7 +10,7 @@ from collections import defaultdict
 from tempfile import mktemp
 
 from blockdevice import BlockDevice
-from ..lib import shell
+from ..lib.shell import Shell
 
 
 class BlockDeviceLinux(BlockDevice):
@@ -20,16 +20,8 @@ class BlockDeviceLinux(BlockDevice):
     def __init__(self, device_type, device_path):
         super(BlockDeviceLinux, self).__init__(device_type, device_path)
 
-        self._modules_initialized = False
-
-    def _initialize_modules(self):
-        if not self._modules_initialized:
-            try:                                            # osd_ldiskfs will load ldiskfs in Lustre 2.4.0+
-                shell.Shell.try_run(['modprobe', 'osd_ldiskfs'])  # TEI-469: Race loading the osd module during mkfs.lustre
-            except shell.Shell.CommandExecutionError:
-                shell.Shell.try_run(['modprobe', 'ldiskfs'])      # TEI-469: Race loading the ldiskfs module during mkfs.lustre
-
-            self._modules_initialized = True
+    def _check_module(self):
+        Shell.try_run(['/usr/sbin/udevadm', 'info', '--path=/module/ldiskfs'])
 
     @property
     def filesystem_type(self):
@@ -58,7 +50,7 @@ class BlockDeviceLinux(BlockDevice):
         return self._blkid_value("UUID")
 
     def _blkid_value(self, value):
-        result = shell.Shell.run(["blkid", "-p", "-o", "value", "-s", value, self._device_path])
+        result = Shell.run(["blkid", "-p", "-o", "value", "-s", value, self._device_path])
 
         if result.rc == 2:
             # blkid returns 2 if there is no filesystem on the device
@@ -87,14 +79,14 @@ class BlockDeviceLinux(BlockDevice):
         result = defaultdict(lambda: [])
 
         try:
-            self._initialize_modules()
-        except shell.Shell.CommandExecutionError:
+            self._check_module()
+        except Shell.CommandExecutionError:
             log.info("ldiskfs is not installed, skipping device MGS/filesystem detection")
             return result
 
         log.info("Searching Lustre logs for filesystems")
 
-        ls = shell.Shell.try_run(["debugfs", "-c", "-R", "ls -l CONFIGS/", self._device_path])
+        ls = Shell.try_run(["debugfs", "-c", "-R", "ls -l CONFIGS/", self._device_path])
         filesystems = []
         targets = []
         for line in ls.split("\n"):
@@ -150,7 +142,7 @@ class BlockDeviceLinux(BlockDevice):
         log.info("Reading log for %s:%s from log %s" % (conf_param_type, conf_param_name, log_name))
 
         try:
-            shell.Shell.try_run(["debugfs", "-c", "-R", "dump CONFIGS/%s %s" % (log_name, tmpfile), self._device_path])
+            Shell.try_run(["debugfs", "-c", "-R", "dump CONFIGS/%s %s" % (log_name, tmpfile), self._device_path])
             if not os.path.exists(tmpfile) or os.path.getsize(tmpfile) == 0:
                 # debugfs returns 0 whether it succeeds or not, find out whether
                 # dump worked by looking for output file of some length. (LU-632)
@@ -222,14 +214,14 @@ class BlockDeviceLinux(BlockDevice):
 
     def targets(self, uuid_name_to_target, device, log):
         try:
-            self._initialize_modules()
-        except shell.Shell.CommandExecutionError:
+            self._check_module()
+        except Shell.CommandExecutionError:
             log.info("ldiskfs is not installed, skipping device %s" % device['path'])
             return self.TargetsInfo([], None)
 
         log.info("Searching device %s of type %s, uuid %s for a Lustre filesystem" % (device['path'], device['type'], device['uuid']))
 
-        result = shell.Shell.run(["tunefs.lustre", "--dryrun", device['path']])
+        result = Shell.run(["tunefs.lustre", "--dryrun", device['path']])
         if result.rc != 0:
             log.info("Device %s did not have a Lustre filesystem on it" % device['path'])
             return self.TargetsInfo([], None)

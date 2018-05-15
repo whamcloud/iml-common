@@ -16,14 +16,9 @@ class FileSystemLdiskfs(FileSystem, BlockDeviceLinux):
     # in the read from blkid. But listing both is safe.
     _supported_filesystems = ['ldiskfs', 'ext4']
 
-    def __init__(self, fstype, device_path):
-        super(FileSystemLdiskfs, self).__init__(fstype, device_path)
-
-        self._modules_initialized = False
-
     @property
     def label(self):
-        self._initialize_modules()
+        self._check_module()
 
         blkid_output = shell.Shell.try_run(['blkid', '-c/dev/null', '-o', 'value', '-s', 'LABEL', self._device_path])
 
@@ -31,7 +26,7 @@ class FileSystemLdiskfs(FileSystem, BlockDeviceLinux):
 
     @property
     def inode_size(self):
-        self._initialize_modules()
+        self._check_module()
 
         dumpe2fs_output = shell.Shell.try_run(['dumpe2fs', '-h', self._device_path])
 
@@ -39,7 +34,7 @@ class FileSystemLdiskfs(FileSystem, BlockDeviceLinux):
 
     @property
     def inode_count(self):
-        self._initialize_modules()
+        self._check_module()
 
         dumpe2fs_output = shell.Shell.try_run(["dumpe2fs", "-h", self._device_path])
 
@@ -50,7 +45,7 @@ class FileSystemLdiskfs(FileSystem, BlockDeviceLinux):
         return shell.Shell.try_run(["umount", os.path.realpath(self._device_path)])
 
     def mkfs(self, target_name, options):
-        self._initialize_modules()
+        self._check_module()
 
         shell.Shell.try_run(['mkfs.lustre'] + options + [self._device_path])
 

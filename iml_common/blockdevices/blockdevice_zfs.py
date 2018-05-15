@@ -39,13 +39,11 @@ class BlockDeviceZfs(BlockDevice):
     def __init__(self, device_type, device_path):
         super(BlockDeviceZfs, self).__init__(device_type, device_path)
 
-        self._modules_initialized = False
         self._zfs_properties = None
         self._zpool_properties = None
 
-    def _initialize_modules(self):
+    def _check_module(self):
         Shell.try_run(['/usr/sbin/udevadm', 'info', '--path=/module/zfs'])
-        self._modules_initialized = True
 
     def _assert_zpool(self, caller_name):
         if '/' in self._device_path:
@@ -59,6 +57,8 @@ class BlockDeviceZfs(BlockDevice):
 
         :return: message describing zfs type and datasets found, None otherwise
         """
+        self._check_module()
+
         self._assert_zpool('filesystem_info')
 
         try:
@@ -72,7 +72,7 @@ class BlockDeviceZfs(BlockDevice):
                                                                self._device_path)
             return None
         except OSError:                             # zfs not found
-            return "Unable to execute commands, check zfs is installed."
+            return "Unable to execute commands, check zfs is operational."
         except Shell.CommandExecutionError as e:    # no zpool 'self._device_path' found
             return str(e)
 
@@ -95,6 +95,8 @@ class BlockDeviceZfs(BlockDevice):
 
         :return: uuid of zfs device (usually zpool or dataset)
         """
+        self._check_module()
+
         out = ""
 
         try:
@@ -115,6 +117,8 @@ class BlockDeviceZfs(BlockDevice):
 
     @property
     def failmode(self):
+        self._check_module()
+
         try:
             self._assert_zpool('failmode')
         except NotZpoolException:
@@ -126,6 +130,8 @@ class BlockDeviceZfs(BlockDevice):
 
     @failmode.setter
     def failmode(self, value):
+        self._check_module()
+
         try:
             self._assert_zpool('failmode')
         except NotZpoolException:
@@ -143,6 +149,8 @@ class BlockDeviceZfs(BlockDevice):
         :param log: optional logger
         :return: dictionary of zfs properties
         """
+        self._check_module()
+
         if reread or not self._zfs_properties:
             self._zfs_properties = {}
 
@@ -167,6 +175,8 @@ class BlockDeviceZfs(BlockDevice):
         :param log: optional logger
         :return: dictionary of zpool properties
         """
+        self._check_module()
+
         self._assert_zpool('zpool_properties')
 
         if reread or not self._zpool_properties:
@@ -190,7 +200,7 @@ class BlockDeviceZfs(BlockDevice):
 
     def targets(self, uuid_name_to_target, device, log):
         try:
-            self._initialize_modules()
+            self._check_module()
         except Shell.CommandExecutionError:
             log.info("zfs is not installed, skipping device %s" % device['path'])
             return self.TargetsInfo([], None)
@@ -244,7 +254,7 @@ class BlockDeviceZfs(BlockDevice):
                often have not have been cleanly exported because the previous mounted node failed in operation.
         :return: None for success meaning the zpool is imported
         """
-        self._initialize_modules()
+        self._check_module()
 
         try:
             self._assert_zpool('import_')
@@ -254,8 +264,8 @@ class BlockDeviceZfs(BlockDevice):
             return blockdevice.import_(pacemaker_ha_operation)
 
         result = Shell.run_canned_error_message(['zpool', 'import'] +
-                                                 (['-f'] if pacemaker_ha_operation else []) +
-                                                 [self._device_path])
+                                                (['-f'] if pacemaker_ha_operation else []) +
+                                                [self._device_path])
 
         if result is not None and 'a pool with that name already exists' in result:
 
@@ -286,7 +296,7 @@ class BlockDeviceZfs(BlockDevice):
 
         :return: None for success meaning the zpool has been exported
         """
-        self._initialize_modules()
+        self._check_module()
 
         try:
             self._assert_zpool('export')

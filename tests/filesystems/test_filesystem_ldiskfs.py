@@ -16,21 +16,19 @@ class TestFileSystemLdiskfs(CommandCaptureTestCase):
         self.type_prop_mock = mock.PropertyMock(return_value='ldiskfs')
         mock.patch.object(BlockDeviceLinux, 'filesystem_type', self.type_prop_mock).start()
 
-        self.patch_init_modules = mock.patch.object(FileSystemLdiskfs, '_initialize_modules')
+        self.patch_init_modules = mock.patch.object(FileSystemLdiskfs, '_check_module')
         self.patch_init_modules.start()
 
         self.filesystem = FileSystemLdiskfs('ldiskfs', '/dev/sda1')
 
         self.addCleanup(mock.patch.stopall)
 
-    def test_initialize_modules(self):
+    def test_check_module(self):
         self.patch_init_modules.stop()
 
-        self.add_commands(CommandCaptureCommand(('modprobe', 'osd_ldiskfs'), rc=1),
-                          CommandCaptureCommand(('modprobe', 'ldiskfs')))
+        self.add_commands(CommandCaptureCommand(('/usr/sbin/udevadm', 'info', '--path=/module/ldiskfs')))
 
-        self.filesystem._initialize_modules()
-        self.assertTrue(self.filesystem._modules_initialized)
+        self.filesystem._check_module()
 
         self.assertRanAllCommandsInOrder()
 

@@ -57,26 +57,18 @@ class BlockDevice(object):
         self._device_type = device_type
         self._device_path = device_path
 
-    def _initialize_modules(self):
-        """
-        Called before operations that might result the filesystem specific modules to be loaded.
-
-        :return: None
-        """
-        return None
+    def _check_module(self):
+        """ Verify relevant kernel module is loaded """
+        pass
 
     @abc.abstractproperty
     def filesystem_type(self):
-        """
-        Return type of occupying filesystem(s)
-        """
+        """ Return type of occupying filesystem(s) """
         pass
 
     @abc.abstractproperty
     def filesystem_info(self):
-        """
-        Return message regarding occupying filesystem(s) that reside on this block device
-        """
+        """ Occupying filesystem(s) that reside on this block device """
         pass
 
     @abc.abstractproperty
