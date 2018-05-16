@@ -17,7 +17,7 @@ class TestFileSystemZFS(CommandCaptureTestCase):
         self.type_patcher = mock.patch.object(BlockDeviceZfs, 'filesystem_type', self.type_prop_mock)
         self.type_patcher.start()
 
-        self.patch_init_modules = mock.patch.object(FileSystemZfs, '_check_module')
+        self.patch_init_modules = mock.patch.object(BlockDeviceZfs, '_check_module')
         self.patch_init_modules.start()
 
         self.filesystem = FileSystemZfs('zfs', 'zpool1')
