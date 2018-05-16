@@ -223,12 +223,3 @@ class FirewallControlEL7(FirewallControl):
         firewall using linux shell
         """
         return self._address_rule('remove', address, proto)
-
-
-class FirewallControlOSX(FirewallControlEL7):
-    """ Just a stub class so that running on OSX things can be made to work. """
-    # override method to allow source to run on OSX
-    @classmethod
-    def _applicable(cls):
-        import platform
-        return platform.system() == 'Darwin'
