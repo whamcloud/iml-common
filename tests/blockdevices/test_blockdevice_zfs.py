@@ -69,7 +69,7 @@ kernel modules are functioning properly.
         self.mock_remove = mock.Mock()
         mock.patch('os.makedirs', self.mock_makedirs).start()
         mock.patch('os.remove', self.mock_remove).start()
-        self.patch_init_modules = mock.patch.object(BlockDeviceZfs, '_initialize_modules')
+        self.patch_init_modules = mock.patch.object(BlockDeviceZfs, '_check_module')
         self.patch_init_modules.start()
         self.mock_open = mock.mock_open()
         mock.patch('__builtin__.open', self.mock_open, create=True).start()
@@ -80,13 +80,12 @@ kernel modules are functioning properly.
         self.reset_command_capture_logs()
         self.addCleanup(mock.patch.stopall)
 
-    def test_initialize_modules(self):
+    def test_check_module(self):
         self.patch_init_modules.stop()
 
         self.add_commands(CommandCaptureCommand(('/usr/sbin/udevadm', 'info', '--path=/module/zfs')))
 
-        self.blockdevice._initialize_modules()
-        self.assertTrue(self.blockdevice._modules_initialized)
+        self.blockdevice._check_module()
 
         self.assertRanAllCommandsInOrder()
 

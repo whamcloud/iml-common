@@ -3,7 +3,7 @@
 # license that can be found in the LICENSE file.
 
 
-from ..lib import shell
+from ..lib.shell import Shell
 from ..lib import util
 import abc
 
@@ -58,44 +58,39 @@ class FileSystem(object):
 
     @abc.abstractmethod
     def label(self):
-        """ :return: Returns the label of the filesystem """
+        """ Returns the label of the filesystem """
         pass
 
     def device_path(self):
-        """ :return: The path to the device the contains/will contain the filesystem """
+        """ The path to the device the contains/will contain the filesystem """
         return self._device_path
 
     @property
     def inode_size(self):
-        """ :return: The inode size of the filesystem, returns 0 if inode size not supported """
+        """ The inode size of the filesystem, returns 0 if inode size not supported """
         return 0
 
     @property
     def inode_count(self):
-        """ :return: The inode count of the filesystem, returns 0 if inode count not supported """
+        """ The inode count of the filesystem, returns 0 if inode count not supported """
         return 0
 
     def mount(self, mount_point):
-        """ :return: Mount the file system, raise an exception on error. """
-        self._initialize_modules()
-
-        result = shell.Shell.run(['mount', '-t', 'lustre', self._device_path, mount_point])
+        """ Mount the file system, raise an exception on error. """
+        result = Shell.run(['mount', '-t', 'lustre', self._device_path, mount_point])
 
         if result.rc in [self.RC_MOUNT_INPUT_OUTPUT_ERROR,
                          self.RC_MOUNT_ENOENT_ERROR,
                          self.RC_MOUNT_ESHUTDOWN_ERROR]:
             # HYD-1040, LU-9838, LU-9976: Sometimes we should retry on a failed registration
-            result = shell.Shell.run(['mount', '-t', 'lustre', self._device_path, mount_point])
+            result = Shell.run(['mount', '-t', 'lustre', self._device_path, mount_point])
 
         if result.rc != self.RC_MOUNT_SUCCESS:
             raise RuntimeError("Error (%s) mounting '%s': '%s' '%s'" % (result.rc, mount_point, result.stdout, result.stderr))
 
-
     def umount(self):
         """ :return: Umount the file system, raise an exception on error. """
-        self._initialize_modules()
-
-        return shell.Shell.try_run(["umount", self._device_path])
+        return Shell.try_run(["umount", self._device_path])
 
     def mount_path(self, target_name):
         """

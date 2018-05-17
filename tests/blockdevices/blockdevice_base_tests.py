@@ -26,7 +26,7 @@ class BaseTestBD(object):
             self.blockdevice = None
 
         @abc.abstractmethod
-        def test_initialize_modules(self):
+        def test_check_module(self):
             pass
 
         @abc.abstractmethod
