@@ -70,6 +70,9 @@ mv %{pypi_name}-%{version} %{rpm_name}-%{version}
 %{python2_sitelib}/%(a=%{pypi_name}; echo ${a//-/_})-*.egg-info/*
 
 %changelog
+* Fri May 18 2018 Tom Nabarro <tom.nabarro@intel.com> 1.4.4-1
+- Fix bug where module is checked for before loading
+
 * Thu May 17 2018 Tom Nabarro <tom.nabarro@intel.com> 1.4.3-1
 - Remove use of modprobe to test presence of kernel modules.
 - Remove unused FirewallControl classes and relevant tests.
