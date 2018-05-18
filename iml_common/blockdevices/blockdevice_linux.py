@@ -81,7 +81,7 @@ class BlockDeviceLinux(BlockDevice):
         try:
             self._check_module()
         except Shell.CommandExecutionError:
-            log.info("ldiskfs is not installed, skipping device MGS/filesystem detection")
+            log.info("ldiskfs is not loaded, skipping device MGS/filesystem detection")
             return result
 
         log.info("Searching Lustre logs for filesystems")
@@ -216,7 +216,7 @@ class BlockDeviceLinux(BlockDevice):
         try:
             self._check_module()
         except Shell.CommandExecutionError:
-            log.info("ldiskfs is not installed, skipping device %s" % device['path'])
+            log.info("ldiskfs is not loaded, skipping device %s" % device['path'])
             return self.TargetsInfo([], None)
 
         log.info("Searching device %s of type %s, uuid %s for a Lustre filesystem" % (device['path'], device['type'], device['uuid']))

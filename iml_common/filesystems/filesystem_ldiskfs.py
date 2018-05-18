@@ -45,8 +45,6 @@ class FileSystemLdiskfs(FileSystem, BlockDeviceLinux):
         return shell.Shell.try_run(["umount", os.path.realpath(self._device_path)])
 
     def mkfs(self, target_name, options):
-        self._check_module()
-
         shell.Shell.try_run(['mkfs.lustre'] + options + [self._device_path])
 
         return {'uuid': self.uuid,
