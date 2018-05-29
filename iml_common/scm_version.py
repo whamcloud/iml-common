@@ -1,4 +1,4 @@
 VERSION = "1.4.4"
 PACKAGE_VERSION = "1.4.4"
-BUILD = "42"
+BUILD = ""
 IS_RELEASE = True
