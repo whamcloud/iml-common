@@ -9,10 +9,6 @@ services:
 jobs:
   include:
   - stage: test
-    env: Type='virus scan'
-    script:
-    - ./include/travis/virus-scan.sh
-  - stage: test
     env: Type='module test'
     script:
     - py.test
