@@ -211,7 +211,7 @@ class ServiceControlEL7(ServiceControl):
         return shell.Shell.run_canned_error_message(['systemctl', 'disable', self.service_name])
 
     def _start(self):
-        return shell.Shell.run_canned_error_message(['systemctl', 'start', self.service_name])
+        return shell.Shell.run_canned_error_message(['systemctl', 'restart', self.service_name])
 
     def _stop(self):
         return shell.Shell.run_canned_error_message(['systemctl', 'stop', self.service_name])
