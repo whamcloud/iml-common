@@ -1,20 +1,20 @@
 # Created by pyp2rpm-3.2.2
 %global pypi_name iml-common
 %{!?name: %global name python2-%{pypi_name}}
-%{?!version: %global version @VERSION@}
+%{?!version: %global version 1.4.5}
 %global major_minor %(version="%{version}"; v=($(echo ${version//./ })); echo ${v[0]}.${v[1]})
-%global patch %(version="%{version}"; echo ${version#%{major_minor}})
-%{?!package_release: %global package_release @RELEASE@}
 %global rpm_name %{pypi_name}%{major_minor}
 
-%{?dist_version: %global source https://github.com/intel-hpdd/%{pypi_name}/archive/%{dist_version}.tar.gz}
+%{?dist_version: %global source https://github.com/whamcloud/%{pypi_name}/archive/%{dist_version}.tar.gz}
 %{?dist_version: %global archive_version %{dist_version}}
 %{?!dist_version: %global source https://files.pythonhosted.org/packages/source/i/%{pypi_name}/%{pypi_name}-%{version}.tar.gz}
 %{?!dist_version: %global archive_version %{version}}
 
 Name:           python-%{rpm_name}
-Version:        %{major_minor}%{patch}
-Release:        %{package_release}%{?dist}
+Version:        1.4.5
+# Release Start
+Release:    1%{?dist}
+# Release End
 Summary:        Common library used by multiple IML components
 License:        MIT
 URL:            https://pypi.python.org/pypi/%{pypi_name}
@@ -72,6 +72,9 @@ mv %{pypi_name}-%{version} %{rpm_name}-%{version}
 %{python2_sitelib}/%(a=%{pypi_name}; echo ${a//-/_})-*.egg-info/*
 
 %changelog
+* Tue Apr 30 2019 Joe Grund <jgrund@whamcloud.com> 1.4.5-1
+- Update to imlteam/copr build system
+
 * Tue May 29 2018 Brian J. Murrell <brian.murrell@intel.com> 1.4.4-2
 - Add Obsoletes: python2-iml-common1.x
 
