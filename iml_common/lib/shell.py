@@ -80,7 +80,7 @@ class BaseShell(object):
                     if monitor_func:
                         monitor_func(p, arg_list, logger)
 
-                    time.sleep(1)
+                    time.sleep(wait)
 
                     if time.time() > timeout:
                         p.kill()
