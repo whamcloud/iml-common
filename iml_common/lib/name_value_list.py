@@ -4,6 +4,7 @@
 
 
 import collections
+
 # OrderedDict is part of the collections module in python2.7
 try:
     from collections import OrderedDict
@@ -11,7 +12,7 @@ except ImportError:
     from ordereddict import OrderedDict
 
 
-NameValueItem = collections.namedtuple("NameValueItem", ['name', 'value'])
+NameValueItem = collections.namedtuple("NameValueItem", ["name", "value"])
 
 
 # NameValueList provides for list of entities where each one has a name and a value
@@ -22,7 +23,7 @@ NameValueItem = collections.namedtuple("NameValueItem", ['name', 'value'])
 # a NameValueItem
 # nothing which gives an empty NameValueList
 class NameValueList(OrderedDict):
-    def __init__(self, entries = []):
+    def __init__(self, entries=[]):
         super(NameValueList, self).__init__()
 
         for entry in entries:
@@ -30,8 +31,8 @@ class NameValueList(OrderedDict):
 
     def add(self, entry):
         if type(entry) == dict:
-            if 'name' in entry and 'value' in entry:
-                self[entry['name']] = entry['value']
+            if "name" in entry and "value" in entry:
+                self[entry["name"]] = entry["value"]
             else:
                 for key, value in entry.items():
                     self[key] = value
@@ -56,4 +57,4 @@ class NameValueList(OrderedDict):
             yield (item.name, item.value)
 
     def collection(self):
-        return [{'name': entry.name, 'value': entry.value} for entry in self]
+        return [{"name": entry.name, "value": entry.value} for entry in self]

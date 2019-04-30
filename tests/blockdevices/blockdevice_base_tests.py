@@ -11,6 +11,7 @@ class BaseTestBD(object):
     """
     Encapsulate BaseTestBlockDevice within class to stop test runner from running abstract base test methods
     """
+
     class BaseTestBlockDevice(CommandCaptureTestCase):
         """
         BlockDevice base test class with abstract test methods to ensure minimum coverage of subclasses

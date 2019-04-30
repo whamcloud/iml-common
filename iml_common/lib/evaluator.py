@@ -19,12 +19,12 @@ binOps = {
     ast.Gt: operator.gt,
     ast.GtE: operator.ge,
     ast.And: operator.and_,
-    ast.Or: operator.or_
+    ast.Or: operator.or_,
 }
 
 
 def safe_eval(expression, properties):
-    '''
+    """
     safe_eval is an safe expression evaluator. It is fairly well featured and allows for all the operators
     defined abot in binops to be used, it can handle bracketing and understand operator precedence.
 
@@ -40,22 +40,22 @@ def safe_eval(expression, properties):
     :param expression: The expression to evaluate.
     :param properties: The properties to be used for the evaluation
     :return: The result of the evaluation or an exception.
-    '''
+    """
 
     def substitute_properties(expression, properties):
         for prop, value in properties.items():
             # If the property is a string then it's value needs to be enclosed in quotes.
-            if (type(value) == str):
+            if type(value) == str:
                 value = "'%s'" % value
 
             expression = expression.replace(prop, str(value))
 
         return expression
 
-    expression = substitute_properties(expression, properties)                  # Sub our properties for their values
-    expression = substitute_properties(expression, {'False': 0, 'True': 1})     # Turn False/True into 0/1
+    expression = substitute_properties(expression, properties)  # Sub our properties for their values
+    expression = substitute_properties(expression, {"False": 0, "True": 1})  # Turn False/True into 0/1
 
-    node = ast.parse(expression, mode='eval')
+    node = ast.parse(expression, mode="eval")
 
     def _eval(node):
         if isinstance(node, ast.Expression):
@@ -69,10 +69,12 @@ def safe_eval(expression, properties):
         elif isinstance(node, ast.BoolOp):
             return binOps[type(node.op)](_eval(node.values[0]), _eval(node.values[1]))
         elif isinstance(node, ast.Compare):
+
             def _compare(ops, comparators):
                 if len(ops) == 1:
                     return binOps[type(ops[0])](_eval(comparators[0]), _eval(comparators[1]))
                 return binOps[type(ops[0])](_eval(comparators[0]), _compare(ops[1:], comparators[1:]))
+
             return _compare(node.ops, [node.left] + node.comparators)
         elif isinstance(node, ast.Name):
             # handle instances of ast.Name, this indicates unrecognised variables in expression

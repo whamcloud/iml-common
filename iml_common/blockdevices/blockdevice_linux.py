@@ -14,14 +14,14 @@ from ..lib.shell import Shell
 
 
 class BlockDeviceLinux(BlockDevice):
-    _supported_device_types = ['linux']
+    _supported_device_types = ["linux"]
     TARGET_NAME_REGEX = "([\w-]+)-(MDT|OST)\w+"
 
     def __init__(self, device_type, device_path):
         super(BlockDeviceLinux, self).__init__(device_type, device_path)
 
     def _check_module(self):
-        Shell.try_run(['/usr/sbin/udevadm', 'info', '--path=/module/ldiskfs'])
+        Shell.try_run(["/usr/sbin/udevadm", "info", "--path=/module/ldiskfs"])
 
     @property
     def filesystem_type(self):
@@ -65,11 +65,14 @@ class BlockDeviceLinux(BlockDevice):
                 # like an MBR
                 return None
         else:
-            raise RuntimeError("Unexpected return code %s from blkid %s: '%s' '%s'" % (result.rc, self._device_path, result.stdout, result.stderr))
+            raise RuntimeError(
+                "Unexpected return code %s from blkid %s: '%s' '%s'"
+                % (result.rc, self._device_path, result.stdout, result.stderr)
+            )
 
     @property
     def preferred_fstype(self):
-        return 'ldiskfs'
+        return "ldiskfs"
 
     def mgs_targets(self, log):
         """
@@ -156,7 +159,7 @@ class BlockDeviceLinux(BlockDevice):
                 # ([\w=]+) covers all possible token[0] from
                 # lustre/utils/llog_reader.c @ 0f8dca08a4f68cba82c2c822998ecc309d3b7aaf
                 (code, action) = re.search("^\\((\d+)\\)([\w=]+)$", tokens[1]).groups()
-                if conf_param_type == 'filesystem' and action == 'setup':
+                if conf_param_type == "filesystem" and action == "setup":
                     # e.g. entry="#09 (144)setup     0:flintfs-MDT0000-mdc  1:flintfs-MDT0000_UUID  2:192.168.122.105@tcp"
                     label = re.search("0:([\w-]+)-\w+", tokens[2]).group(1)
                     fs_name = label.rsplit("-", 1)[0]
@@ -165,12 +168,9 @@ class BlockDeviceLinux(BlockDevice):
 
                     log.info("Found log entry for uuid %s, label %s, nid %s" % (uuid, label, nid))
 
-                    result[fs_name].append({
-                        "uuid": uuid,
-                        "name": label,
-                        "nid": nid})
-                elif action == "param" or (action == 'SKIP' and tokens[2] == 'param'):
-                    if action == 'SKIP':
+                    result[fs_name].append({"uuid": uuid, "name": label, "nid": nid})
+                elif action == "param" or (action == "SKIP" and tokens[2] == "param"):
+                    if action == "SKIP":
                         clear = True
                         tokens = tokens[1:]
                     else:
@@ -186,7 +186,7 @@ class BlockDeviceLinux(BlockDevice):
                         param_name = conf_param_name
                     elif re.search(self.TARGET_NAME_REGEX, object):
                         # Identify target params
-                        param_type = 'target'
+                        param_type = "target"
                         param_name = re.search(self.TARGET_NAME_REGEX, object).group(0)
                     else:
                         # Fall through here for things like 0:testfs-llite, 0:testfs-clilov
@@ -207,7 +207,7 @@ class BlockDeviceLinux(BlockDevice):
                     # 2.2 don't save the conf params because nothing reads them and zfs doesn't seem to produce them
                     # so keep the code - but just don't store.
                     # This change is being made on the FF date hence the caution.
-                    #self.conf_params[param_type][param_name][key] = val
+                    # self.conf_params[param_type][param_name][key] = val
         finally:
             if os.path.exists(tmpfile):
                 os.unlink(tmpfile)
@@ -216,14 +216,17 @@ class BlockDeviceLinux(BlockDevice):
         try:
             self._check_module()
         except Shell.CommandExecutionError:
-            log.info("ldiskfs is not loaded, skipping device %s" % device['path'])
+            log.info("ldiskfs is not loaded, skipping device %s" % device["path"])
             return self.TargetsInfo([], None)
 
-        log.info("Searching device %s of type %s, uuid %s for a Lustre filesystem" % (device['path'], device['type'], device['uuid']))
+        log.info(
+            "Searching device %s of type %s, uuid %s for a Lustre filesystem"
+            % (device["path"], device["type"], device["uuid"])
+        )
 
-        result = Shell.run(["tunefs.lustre", "--dryrun", device['path']])
+        result = Shell.run(["tunefs.lustre", "--dryrun", device["path"]])
         if result.rc != 0:
-            log.info("Device %s did not have a Lustre filesystem on it" % device['path'])
+            log.info("Device %s did not have a Lustre filesystem on it" % device["path"])
             return self.TargetsInfo([], None)
 
         # For a Lustre block device, extract name and params
@@ -236,13 +239,15 @@ class BlockDeviceLinux(BlockDevice):
             params = defaultdict(list)
 
             # FIXME: naive parse: can these lines be quoted/escaped/have spaces?
-            for lustre_property, value in [t.split('=') for t in params_re.group(1).split()]:
-                params[lustre_property].extend(re.split(BlockDeviceLinux.lustre_property_delimiters[lustre_property], value))
+            for lustre_property, value in [t.split("=") for t in params_re.group(1).split()]:
+                params[lustre_property].extend(
+                    re.split(BlockDeviceLinux.lustre_property_delimiters[lustre_property], value)
+                )
         else:
             params = {}
 
         if name.find("ffff") != -1:
-            log.info("Device %s reported an unregistered lustre target and so will not be reported" % device['path'])
+            log.info("Device %s reported an unregistered lustre target and so will not be reported" % device["path"])
             return self.TargetsInfo([], None)
 
         if flags & 0x0005 == 0x0005:

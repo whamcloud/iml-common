@@ -8,7 +8,7 @@ from ..lib import shell
 
 
 class BlockDeviceLvmVolume(BlockDeviceLinux):
-    _supported_device_types = ['lvm_volume']
+    _supported_device_types = ["lvm_volume"]
 
     @property
     def uuid(self):

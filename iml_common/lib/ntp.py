@@ -13,11 +13,11 @@ from iml_common.lib.util import PreserveFileAttributes
 class NTPConfig(object):
     """ Class to enable IML to automatically configure NTP """
 
-    DEFAULT_CONFIG_FILE = '/etc/ntp.conf'
+    DEFAULT_CONFIG_FILE = "/etc/ntp.conf"
     # use only a single marker for replace, comment and insert actions on config file
-    MARKER = '# IML_EDITv1'
-    PREFIX = 'server'
-    IBURST = 'iburst'
+    MARKER = "# IML_EDITv1"
+    PREFIX = "server"
+    IBURST = "iburst"
 
     def __init__(self, config_file=DEFAULT_CONFIG_FILE, logger=None):
         """
@@ -28,7 +28,7 @@ class NTPConfig(object):
         """
         self.logger = logger
         self.config_path = config_file
-        self.lines = []       # lines to be read in from config file
+        self.lines = []  # lines to be read in from config file
 
     def get_configured_server(self, markers):
         """
@@ -49,10 +49,10 @@ class NTPConfig(object):
 
         # read in file content
         try:
-            with open(self.config_path, 'r') as f:
+            with open(self.config_path, "r") as f:
                 lines = f.readlines()
         except IOError as e:
-            self._log(e.message, level='error')
+            self._log(e.message, level="error")
             return None
 
         found = None
@@ -70,19 +70,19 @@ class NTPConfig(object):
 
         # find first server directive in IML-modified file
         try:
-            server = next(line.split()[1] for line in lines if line.startswith('server '))
+            server = next(line.split()[1] for line in lines if line.startswith("server "))
         except StopIteration:
-            self._log('no configured server found in IML-modified ntp config file', level='debug')
+            self._log("no configured server found in IML-modified ntp config file", level="debug")
             return None
-        if server == '127.127.1.0':
+        if server == "127.127.1.0":
             # ntp configured to use local clock
-            return 'localhost'
+            return "localhost"
         return server
 
-    def _log(self, msg, level='info'):
+    def _log(self, msg, level="info"):
         """ utility function for using reference to an external logger """
         if self.logger and hasattr(self.logger, level):
-            getattr(self.logger, level)('{0}: {1}'.format(self.__class__.__name__, msg))
+            getattr(self.logger, level)("{0}: {1}".format(self.__class__.__name__, msg))
 
     def _reset_and_read_conf(self):
         """
@@ -90,7 +90,7 @@ class NTPConfig(object):
         pre-configured file there should be no IML changes and only standard ntp (v4) formatting
         """
         # read in file content
-        with open(self.config_path, 'r') as f:
+        with open(self.config_path, "r") as f:
             original_lines = f.readlines()
 
         self.lines = []
@@ -98,7 +98,7 @@ class NTPConfig(object):
         for line in original_lines:
             if self.MARKER in line:
                 # retrieve commented out directive from line
-                line = line[line.find(self.MARKER) + len(self.MARKER) + 1:]
+                line = line[line.find(self.MARKER) + len(self.MARKER) + 1 :]
                 # don't append edited lines not replacing an old directive
                 if line.strip() != "":
                     self.lines.append(line)
@@ -111,16 +111,15 @@ class NTPConfig(object):
         destination file. Close any open files and file descriptors
         """
         with PreserveFileAttributes(self.config_path):
-            tmp_fd, tmp_name = tempfile.mkstemp(dir='/etc')
-            os.write(tmp_fd, ''.join(self.lines))
+            tmp_fd, tmp_name = tempfile.mkstemp(dir="/etc")
+            os.write(tmp_fd, "".join(self.lines))
             os.close(tmp_fd)
             shutil.move(tmp_name, self.config_path)
 
     def _get_prefix_index(self):
         """ Helper method to return first index of string starting with prefix in list """
         try:
-            return next(idx for idx, value in enumerate(self.lines) if
-                        value.startswith(self.PREFIX + ' '))
+            return next(idx for idx, value in enumerate(self.lines) if value.startswith(self.PREFIX + " "))
         except StopIteration:
             return None
 
@@ -136,7 +135,7 @@ class NTPConfig(object):
         """
         prefix_index = self._get_prefix_index()
         first_prefix_index = None
-        line_to_replace = '\n'
+        line_to_replace = "\n"
 
         if prefix_index is not None:
             # Mark the index of the first directive we find, this is where we want add the server
@@ -148,16 +147,18 @@ class NTPConfig(object):
 
             # while server directive found in lines, comment out line with marker
             while prefix_index is not None:
-                self.lines[prefix_index] = ' '.join([self.MARKER, self.lines[prefix_index]])
+                self.lines[prefix_index] = " ".join([self.MARKER, self.lines[prefix_index]])
                 prefix_index = self._get_prefix_index()
 
         # now we have stored the first server directive and commented out others, add the new content
-        if server == 'localhost':
+        if server == "localhost":
             # add local clock to config
-            content = ['server  127.127.1.0 %s\n' % self.MARKER,
-                       'fudge   127.127.1.0 stratum 10 %s %s' % (self.MARKER, line_to_replace)]
+            content = [
+                "server  127.127.1.0 %s\n" % self.MARKER,
+                "fudge   127.127.1.0 stratum 10 %s %s" % (self.MARKER, line_to_replace),
+            ]
         else:
-            content = [' '.join([self.PREFIX, server, self.IBURST, self.MARKER, line_to_replace])]
+            content = [" ".join([self.PREFIX, server, self.IBURST, self.MARKER, line_to_replace])]
 
         for line in content:
             # if no server directives found in file, append content to the end of the file
@@ -189,7 +190,7 @@ class NTPConfig(object):
 
             self._write_conf()
         except (IOError, OSError) as e:
-            self._log(e.message, level='error')
+            self._log(e.message, level="error")
 
             return e.message
 

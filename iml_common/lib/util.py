@@ -14,7 +14,7 @@ from collections import MutableSequence
 import signal
 
 
-ExpiringValue = namedtuple('ExpiringValue', ['value', 'expiry'])
+ExpiringValue = namedtuple("ExpiringValue", ["value", "expiry"])
 
 
 class ExpiringList(MutableSequence):
@@ -48,18 +48,17 @@ class ExpiringList(MutableSequence):
 
 class ExceptionThrowingThread(threading.Thread):
     def __init__(self, *args, **kwargs):
-        value = os.environ.get('IML_DISABLE_THREADS', '0')
+        value = os.environ.get("IML_DISABLE_THREADS", "0")
         # Sometimes not threading helps with debug, disabled by setting IML_DISABLE_THREADS=1
         try:
-            self._use_threads = kwargs.pop('use_threads',
-                                           True if not value else not bool(int(value)))
+            self._use_threads = kwargs.pop("use_threads", True if not value else not bool(int(value)))
         except ValueError:
             self._use_threads = True
 
         if self._use_threads:
             super(ExceptionThrowingThread, self).__init__(*args, **kwargs)
-        self._call_target = kwargs['target']
-        self._call_args = kwargs['args']
+        self._call_target = kwargs["target"]
+        self._call_args = kwargs["args"]
         self._exception_value = None
 
     def run(self):
@@ -107,8 +106,7 @@ def all_subclasses(klass):
     :return: All the subclasses of the class passed, scanning the inheritance tree recursively
              to find ALL the subclasses.
     """
-    return klass.__subclasses__() + [child for subclass in klass.__subclasses__() for child in
-                                     all_subclasses(subclass)]
+    return klass.__subclasses__() + [child for subclass in klass.__subclasses__() for child in all_subclasses(subclass)]
 
 
 def enum(*sequential, **named):
@@ -120,17 +118,22 @@ def enum(*sequential, **named):
     """
     enums = dict(zip(sequential, range(len(sequential))), **named)
     reverse = dict((value, key) for key, value in enums.iteritems())
-    enums['reverse_mapping'] = reverse
-    return type('Enum', (), enums)
+    enums["reverse_mapping"] = reverse
+    return type("Enum", (), enums)
 
 
-PlatformInfo = namedtuple('PlatformInfo', ['system',
-                                           'distro',
-                                           'distro_version',
-                                           'distro_version_full',  # note this returns a string e.g. '6.7.1455'
-                                           'python_version_major_minor',
-                                           'python_patchlevel',
-                                           'kernel_version'])
+PlatformInfo = namedtuple(
+    "PlatformInfo",
+    [
+        "system",
+        "distro",
+        "distro_version",
+        "distro_version_full",  # note this returns a string e.g. '6.7.1455'
+        "python_version_major_minor",
+        "python_patchlevel",
+        "kernel_version",
+    ],
+)
 
 """A more readable version of the standard platform commands. Using a named tuple the
 usage should be much easier to fathom. Caches the value for speed which presumes
@@ -140,35 +143,36 @@ For a Mac, Windows or non-Centos Linux it pretends to be Centos 7.2.
 
 :return: PlatformInfo named tuple
 """
-if platform.system() == 'Linux' and platform.linux_distribution()[0] == 'CentOS':
-    platform_info = PlatformInfo(platform.system(),
-                                 platform.linux_distribution()[0],
-                                 float('.'.join(platform.linux_distribution()[1].split('.')[:2])),
-                                 platform.linux_distribution()[1],
-                                 float("%s.%s" % (platform.python_version_tuple()[0],
-                                                  platform.python_version_tuple()[1])),
-                                 int(platform.python_version_tuple()[2]),
-                                 platform.release())
-elif platform.system() in ['Darwin', 'Windows', 'Linux']:
-    platform_info = PlatformInfo('Linux',
-                                 'CentOS',
-                                 '7.2',
-                                 '7.2.1551',
-                                 float("%s.%s" % (platform.python_version_tuple()[0],
-                                                  platform.python_version_tuple()[1])),
-                                 int(platform.python_version_tuple()[2]),
-                                 '3.10.0-327.36.3.el7.x86_64')
+if platform.system() == "Linux" and platform.linux_distribution()[0] == "CentOS":
+    platform_info = PlatformInfo(
+        platform.system(),
+        platform.linux_distribution()[0],
+        float(".".join(platform.linux_distribution()[1].split(".")[:2])),
+        platform.linux_distribution()[1],
+        float("%s.%s" % (platform.python_version_tuple()[0], platform.python_version_tuple()[1])),
+        int(platform.python_version_tuple()[2]),
+        platform.release(),
+    )
+elif platform.system() in ["Darwin", "Windows", "Linux"]:
+    platform_info = PlatformInfo(
+        "Linux",
+        "CentOS",
+        "7.2",
+        "7.2.1551",
+        float("%s.%s" % (platform.python_version_tuple()[0], platform.python_version_tuple()[1])),
+        int(platform.python_version_tuple()[2]),
+        "3.10.0-327.36.3.el7.x86_64",
+    )
 else:
-    raise RuntimeError('Unknown system type %s' % platform.system())
+    raise RuntimeError("Unknown system type %s" % platform.system())
 
 
 class PreserveFileAttributes(object):
-
     def __init__(self, target):
         self.target = target
 
     def __enter__(self):
-        self.orig_perm = os.stat(self.target).st_mode & 0777
+        self.orig_perm = os.stat(self.target).st_mode & 0o777
         self.orig_uid = os.stat(self.target).st_uid
         self.orig_gid = os.stat(self.target).st_gid
 
@@ -242,7 +246,7 @@ def human_to_bytes(value_str):
 
 def pid_exists(pid):
     """ Check whether pid exists in the current process table. """
-    assert type(pid) is int, 'supplied pid must be a digit'
+    assert type(pid) is int, "supplied pid must be a digit"
 
     if pid < 0:
         return False
@@ -251,7 +255,7 @@ def pid_exists(pid):
         # in the process group of the calling process.
         # On certain systems 0 is a valid PID but we have no way
         # to know that in a portable fashion.
-        raise ValueError('invalid PID 0')
+        raise ValueError("invalid PID 0")
 
     try:
         os.kill(pid, signal.SIG_DFL)

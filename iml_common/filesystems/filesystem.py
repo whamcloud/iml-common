@@ -38,7 +38,7 @@ class FileSystem(object):
                 if device_path in _cached_filesystem_types:
                     fstype = _cached_filesystem_types[device_path]
                 else:
-                    fstype = 'ldiskfs'
+                    fstype = "ldiskfs"
             else:
                 _cached_filesystem_types[device_path] = fstype
 
@@ -77,16 +77,16 @@ class FileSystem(object):
 
     def mount(self, mount_point):
         """ Mount the file system, raise an exception on error. """
-        result = Shell.run(['mount', '-t', 'lustre', self._device_path, mount_point])
+        result = Shell.run(["mount", "-t", "lustre", self._device_path, mount_point])
 
-        if result.rc in [self.RC_MOUNT_INPUT_OUTPUT_ERROR,
-                         self.RC_MOUNT_ENOENT_ERROR,
-                         self.RC_MOUNT_ESHUTDOWN_ERROR]:
+        if result.rc in [self.RC_MOUNT_INPUT_OUTPUT_ERROR, self.RC_MOUNT_ENOENT_ERROR, self.RC_MOUNT_ESHUTDOWN_ERROR]:
             # HYD-1040, LU-9838, LU-9976: Sometimes we should retry on a failed registration
-            result = Shell.run(['mount', '-t', 'lustre', self._device_path, mount_point])
+            result = Shell.run(["mount", "-t", "lustre", self._device_path, mount_point])
 
         if result.rc != self.RC_MOUNT_SUCCESS:
-            raise RuntimeError("Error (%s) mounting '%s': '%s' '%s'" % (result.rc, mount_point, result.stdout, result.stderr))
+            raise RuntimeError(
+                "Error (%s) mounting '%s': '%s' '%s'" % (result.rc, mount_point, result.stdout, result.stderr)
+            )
 
     def umount(self):
         """ :return: Umount the file system, raise an exception on error. """

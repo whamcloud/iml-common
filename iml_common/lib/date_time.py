@@ -19,31 +19,28 @@ class IMLDateTime(datetime):
 
     @classmethod
     def parse(cls, raw_date_str):
-        date_match = re.match('.*(\d\d\d\d[-/]\d\d[-/]\d\d)', raw_date_str)
-        time_match = re.match('.*(\d\d:\d\d:\d\d)', raw_date_str)
-        microsecond_match = re.match('.*\.(\d*)', raw_date_str)
-        zone_match = re.match('.*([+-]\d\d:?\d\d)', raw_date_str)
+        date_match = re.match(".*(\d\d\d\d[-/]\d\d[-/]\d\d)", raw_date_str)
+        time_match = re.match(".*(\d\d:\d\d:\d\d)", raw_date_str)
+        microsecond_match = re.match(".*\.(\d*)", raw_date_str)
+        zone_match = re.match(".*([+-]\d\d:?\d\d)", raw_date_str)
 
-        microseconds = microsecond_match.group(1) if microsecond_match else '0'
+        microseconds = microsecond_match.group(1) if microsecond_match else "0"
 
         if date_match and time_match:
-            naive_date_str = "%s %s.%s" % (date_match.group(1).replace('/', '-'),
-                                           time_match.group(1),
-                                           microseconds)
+            naive_date_str = "%s %s.%s" % (date_match.group(1).replace("/", "-"), time_match.group(1), microseconds)
 
-            naive_dt = IMLDateTime.strptime(naive_date_str, '%Y-%m-%d %H:%M:%S.%f')
+            naive_dt = IMLDateTime.strptime(naive_date_str, "%Y-%m-%d %H:%M:%S.%f")
         elif date_match:
-            naive_dt = IMLDateTime.strptime(date_match.group(1).replace('/', '-'), '%Y-%m-%d')
+            naive_dt = IMLDateTime.strptime(date_match.group(1).replace("/", "-"), "%Y-%m-%d")
         elif time_match:
-            naive_time_str = "%s.%s" % (time_match.group(1),
-                                        microseconds)
+            naive_time_str = "%s.%s" % (time_match.group(1), microseconds)
 
-            naive_dt = IMLDateTime.strptime(naive_time_str, '%H:%M:%S.%f')
+            naive_dt = IMLDateTime.strptime(naive_time_str, "%H:%M:%S.%f")
         else:
             raise ValueError('Unable to parse "%s"' % raw_date_str)
 
         if zone_match:
-            offset_str = zone_match.group(1).replace(':', '')
+            offset_str = zone_match.group(1).replace(":", "")
 
             offset = int(offset_str[-4:-2]) * 60 + int(offset_str[-2:])
 
@@ -72,18 +69,21 @@ class IMLDateTime(datetime):
         understand inheritance! So return a datetime of the IMLDateTime
         :return: datetime
         """
-        return datetime(year=self.year,
-                        month=self.month,
-                        day=self.day,
-                        hour=self.hour,
-                        minute=self.minute,
-                        second=self.second,
-                        microsecond=self.microsecond,
-                        tzinfo=self.tzinfo)
+        return datetime(
+            year=self.year,
+            month=self.month,
+            day=self.day,
+            hour=self.hour,
+            minute=self.minute,
+            second=self.second,
+            microsecond=self.microsecond,
+            tzinfo=self.tzinfo,
+        )
 
 
 class FixedOffset(tzinfo):
     """Fixed offset in minutes: `time = utc_time + utc_offset`."""
+
     def __init__(self, offset=0):
         self.offset = timedelta(minutes=offset)
 
@@ -99,7 +99,7 @@ class FixedOffset(tzinfo):
         return self._offset
 
     def tzname(self, dt=None):
-        return '<%s>' % self._offset
+        return "<%s>" % self._offset
 
     def dst(self, dt=None):
         return timedelta(0)
@@ -109,22 +109,21 @@ class FixedOffset(tzinfo):
         minutes += int(self.offset.seconds / 60)
         minutes += int(self.offset.microseconds / (10 ^ 6)) / 60
 
-        return '%s%02d%02d' % ('-' if minutes < 0 else '',
-                               divmod(abs(minutes), 60)[0],
-                               divmod(abs(minutes), 60)[1])
+        return "%s%02d%02d" % ("-" if minutes < 0 else "", divmod(abs(minutes), 60)[0], divmod(abs(minutes), 60)[1])
 
 
 class LocalOffset(FixedOffset):
     """Fixed offset to localtime zone. `time = utc_time + local_offset`."""
+
     def __init__(self):
         utc_offset_timedelta = datetime.now() - datetime.utcnow()
 
         # because we can't stop time, we will find that the seconds are probably one less and microseconds is not
         # zero. We will have a difference that is something like. 0:59:59.999975
         if utc_offset_timedelta.microseconds != 0:
-            utc_offset_timedelta = timedelta(days=utc_offset_timedelta.days,
-                                             seconds=utc_offset_timedelta.seconds + 1,
-                                             microseconds=0)
+            utc_offset_timedelta = timedelta(
+                days=utc_offset_timedelta.days, seconds=utc_offset_timedelta.seconds + 1, microseconds=0
+            )
 
         utc_offset_timedelta_minutes = (utc_offset_timedelta.seconds + (utc_offset_timedelta.days * 24 * 3600)) / 60
 
