@@ -9,19 +9,20 @@ def target_func():
 
 
 class PreservePermissionTestCase(ImlUnitTestCase):
-
     def test_file(self):
-        for filename, st_mode, st_uid, st_gid in [('sidney', 493, 2, 10),
-                                                  ('denver', 362, 4, 7),
-                                                  ('shytown', 302, 5, 8)]:
+        for filename, st_mode, st_uid, st_gid in [
+            ("sidney", 493, 2, 10),
+            ("denver", 362, 4, 7),
+            ("shytown", 302, 5, 8),
+        ]:
             magic_stat_mock = mock.MagicMock()
             magic_stat_mock.st_mode = st_mode
             magic_stat_mock.st_uid = st_uid
             magic_stat_mock.st_gid = st_gid
 
-            mock_os_stat = mock.patch('os.stat', return_value=magic_stat_mock).start()
-            mock_os_chown = mock.patch('os.chown').start()
-            mock_os_chmod = mock.patch('os.chmod').start()
+            mock_os_stat = mock.patch("os.stat", return_value=magic_stat_mock).start()
+            mock_os_chown = mock.patch("os.chown").start()
+            mock_os_chmod = mock.patch("os.chmod").start()
 
             with util.PreserveFileAttributes(filename):
                 self.assertEqual(mock_os_stat.call_count, 3)
@@ -34,13 +35,12 @@ class PreservePermissionTestCase(ImlUnitTestCase):
 
 
 class DisableThreadsTestCase(ImlUnitTestCase):
-
     def setUp(self):
         super(DisableThreadsTestCase, self).setUp()
-        environ.pop('IML_DISABLE_THREADS', None)
+        environ.pop("IML_DISABLE_THREADS", None)
 
     def tearDown(self):
-        environ.pop('IML_DISABLE_THREADS', None)
+        environ.pop("IML_DISABLE_THREADS", None)
         super(DisableThreadsTestCase, self).tearDown()
 
     def test_threads_on(self):
@@ -49,15 +49,15 @@ class DisableThreadsTestCase(ImlUnitTestCase):
         self.assertTrue(thread._use_threads)
 
     def test_threads_on_values(self):
-        values = ['0', '']
+        values = ["0", ""]
         for value in values:
-            environ['IML_DISABLE_THREADS'] = value
+            environ["IML_DISABLE_THREADS"] = value
             thread = util.ExceptionThrowingThread(target=target_func, args=())
 
             self.assertTrue(thread._use_threads)
 
     def test_threads_off(self):
-        environ['IML_DISABLE_THREADS'] = '1'
+        environ["IML_DISABLE_THREADS"] = "1"
         thread = util.ExceptionThrowingThread(target=target_func, args=())
 
         self.assertFalse(thread._use_threads)

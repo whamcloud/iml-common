@@ -17,7 +17,7 @@ except ImportError:
     log = logging.getLogger(__name__)
 
     if not log.handlers:
-        handler = logging.FileHandler('blockdevice_zfs.log')
+        handler = logging.FileHandler("blockdevice_zfs.log")
         handler.setFormatter(logging.Formatter("[%(asctime)s: %(levelname)s/%(name)s] %(message)s"))
         log.addHandler(handler)
         log.setLevel(logging.DEBUG)
@@ -32,9 +32,9 @@ class BlockDeviceZfs(BlockDevice):
     LDD_F_SV_TYPE_MDT = 0x0001
     LDD_F_SV_TYPE_OST = 0x0002
     LDD_F_SV_TYPE_MGS = 0x0004
-    LDD_F_SV_TYPE_MGS_or_MDT = (LDD_F_SV_TYPE_MGS | LDD_F_SV_TYPE_MDT)
+    LDD_F_SV_TYPE_MGS_or_MDT = LDD_F_SV_TYPE_MGS | LDD_F_SV_TYPE_MDT
 
-    _supported_device_types = ['zfs']
+    _supported_device_types = ["zfs"]
 
     def __init__(self, device_type, device_path):
         super(BlockDeviceZfs, self).__init__(device_type, device_path)
@@ -43,12 +43,13 @@ class BlockDeviceZfs(BlockDevice):
         self._zpool_properties = None
 
     def _check_module(self):
-        Shell.try_run(['/usr/sbin/udevadm', 'info', '--path=/module/zfs'])
+        Shell.try_run(["/usr/sbin/udevadm", "info", "--path=/module/zfs"])
 
     def _assert_zpool(self, caller_name):
-        if '/' in self._device_path:
-            raise NotZpoolException("%s accepts zpools as device_path, '%s' is not a zpool!" % (caller_name,
-                                                                                                self._device_path))
+        if "/" in self._device_path:
+            raise NotZpoolException(
+                "%s accepts zpools as device_path, '%s' is not a zpool!" % (caller_name, self._device_path)
+            )
 
     @property
     def filesystem_info(self):
@@ -59,21 +60,23 @@ class BlockDeviceZfs(BlockDevice):
         """
         self._check_module()
 
-        self._assert_zpool('filesystem_info')
+        self._assert_zpool("filesystem_info")
 
         try:
-            device_names = Shell.try_run(['zfs', 'list', '-H', '-o', 'name', '-r', self._device_path]).split('\n')
+            device_names = Shell.try_run(["zfs", "list", "-H", "-o", "name", "-r", self._device_path]).split("\n")
 
-            datasets = [line.split('/', 1)[1] for line in device_names if '/' in line]
+            datasets = [line.split("/", 1)[1] for line in device_names if "/" in line]
 
             if datasets:
-                return "Dataset%s '%s' found on zpool '%s'" % ('s' if (len(datasets) > 1) else '',
-                                                               ','.join(datasets),
-                                                               self._device_path)
+                return "Dataset%s '%s' found on zpool '%s'" % (
+                    "s" if (len(datasets) > 1) else "",
+                    ",".join(datasets),
+                    self._device_path,
+                )
             return None
-        except OSError:                             # zfs not found
+        except OSError:  # zfs not found
             return "Unable to execute commands, check zfs is operational."
-        except Shell.CommandExecutionError as e:    # no zpool 'self._device_path' found
+        except Shell.CommandExecutionError as e:  # no zpool 'self._device_path' found
             return str(e)
 
     @property
@@ -83,7 +86,7 @@ class BlockDeviceZfs(BlockDevice):
 
         :return: 'zfs' if occupied or error encountered, None otherwise
         """
-        self._assert_zpool('filesystem_type')
+        self._assert_zpool("filesystem_type")
 
         return self.preferred_fstype if self.filesystem_info is not None else None
 
@@ -100,8 +103,8 @@ class BlockDeviceZfs(BlockDevice):
         out = ""
 
         try:
-            out = Shell.try_run(['zfs', 'get', '-H', '-o', 'value', 'guid', self._device_path])
-        except OSError:                                     # Zfs not found.
+            out = Shell.try_run(["zfs", "get", "-H", "-o", "value", "guid", self._device_path])
+        except OSError:  # Zfs not found.
             pass
 
         lines = [l for l in out.split("\n") if len(l) > 0]
@@ -113,16 +116,16 @@ class BlockDeviceZfs(BlockDevice):
 
     @property
     def preferred_fstype(self):
-        return 'zfs'
+        return "zfs"
 
     @property
     def failmode(self):
         self._check_module()
 
         try:
-            self._assert_zpool('failmode')
+            self._assert_zpool("failmode")
         except NotZpoolException:
-            blockdevice = BlockDevice(self._supported_device_types[0], self._device_path.split('/')[0])
+            blockdevice = BlockDevice(self._supported_device_types[0], self._device_path.split("/")[0])
 
             return blockdevice.failmode
         else:
@@ -133,9 +136,9 @@ class BlockDeviceZfs(BlockDevice):
         self._check_module()
 
         try:
-            self._assert_zpool('failmode')
+            self._assert_zpool("failmode")
         except NotZpoolException:
-            blockdevice = BlockDevice(self._supported_device_types[0], self._device_path.split('/')[0])
+            blockdevice = BlockDevice(self._supported_device_types[0], self._device_path.split("/")[0])
 
             blockdevice.failmode = value
         else:
@@ -161,7 +164,7 @@ class BlockDeviceZfs(BlockDevice):
                     try:
                         key, value = line.split()
                         self._zfs_properties[key] = value
-                    except ValueError:                              # Be resilient to things we don't understand.
+                    except ValueError:  # Be resilient to things we don't understand.
                         if log:
                             log.info("zfs get for %s returned %s which was not parsable." % (self._device_path, line))
 
@@ -177,7 +180,7 @@ class BlockDeviceZfs(BlockDevice):
         """
         self._check_module()
 
-        self._assert_zpool('zpool_properties')
+        self._assert_zpool("zpool_properties")
 
         if reread or not self._zpool_properties:
             self._zpool_properties = {}
@@ -188,7 +191,7 @@ class BlockDeviceZfs(BlockDevice):
                 try:
                     _, key, value, _ = line.split()
                     self._zpool_properties[key] = value
-                except ValueError:                              # Be resilient to things we don't understand.
+                except ValueError:  # Be resilient to things we don't understand.
                     if log:
                         log.info("zpool get for %s returned %s which was not parsable." % (self._device_path, line))
                     pass
@@ -202,37 +205,39 @@ class BlockDeviceZfs(BlockDevice):
         try:
             self._check_module()
         except Shell.CommandExecutionError:
-            log.info("zfs is not installed, skipping device %s" % device['path'])
+            log.info("zfs is not installed, skipping device %s" % device["path"])
             return self.TargetsInfo([], None)
 
         if log:
-            log.info("Searching device %s of type %s, uuid %s for a Lustre filesystem" % (device['path'],
-                                                                                          device['type'],
-                                                                                          device['uuid']))
+            log.info(
+                "Searching device %s of type %s, uuid %s for a Lustre filesystem"
+                % (device["path"], device["type"], device["uuid"])
+            )
 
         zfs_properties = self.zfs_properties(False, log)
 
-        if ('lustre:svname' not in zfs_properties) or ('lustre:flags' not in zfs_properties):
+        if ("lustre:svname" not in zfs_properties) or ("lustre:flags" not in zfs_properties):
             if log:
-                log.info("Device %s did not have a Lustre property values required" % device['path'])
+                log.info("Device %s did not have a Lustre property values required" % device["path"])
             return self.TargetsInfo([], None)
 
         # For a Lustre block device, extract name and params
         # ==================================================
-        name = zfs_properties['lustre:svname']
-        flags = int(zfs_properties['lustre:flags'])
+        name = zfs_properties["lustre:svname"]
+        flags = int(zfs_properties["lustre:flags"])
 
         params = defaultdict(list)
 
         for zfs_property in zfs_properties:
-            if zfs_property.startswith('lustre:'):
-                lustre_property = zfs_property.split(':')[1]
-                params[lustre_property].extend(re.split(BlockDeviceZfs.lustre_property_delimiters[lustre_property],
-                                                        zfs_properties[zfs_property]))
+            if zfs_property.startswith("lustre:"):
+                lustre_property = zfs_property.split(":")[1]
+                params[lustre_property].extend(
+                    re.split(BlockDeviceZfs.lustre_property_delimiters[lustre_property], zfs_properties[zfs_property])
+                )
 
         if name.find("ffff") != -1:
             if log:
-                log.info("Device %s reported an unregistered lustre target" % device['path'])
+                log.info("Device %s reported an unregistered lustre target" % device["path"])
             return self.TargetsInfo([], None)
 
         if (flags & self.LDD_F_SV_TYPE_MGS_or_MDT) == self.LDD_F_SV_TYPE_MGS_or_MDT:
@@ -257,19 +262,19 @@ class BlockDeviceZfs(BlockDevice):
         self._check_module()
 
         try:
-            self._assert_zpool('import_')
+            self._assert_zpool("import_")
         except NotZpoolException:
-            blockdevice = BlockDevice(self._supported_device_types[0], self._device_path.split('/')[0])
+            blockdevice = BlockDevice(self._supported_device_types[0], self._device_path.split("/")[0])
 
             return blockdevice.import_(pacemaker_ha_operation)
 
-        result = Shell.run_canned_error_message(['zpool', 'import'] +
-                                                (['-f'] if pacemaker_ha_operation else []) +
-                                                [self._device_path])
+        result = Shell.run_canned_error_message(
+            ["zpool", "import"] + (["-f"] if pacemaker_ha_operation else []) + [self._device_path]
+        )
 
-        if result is not None and 'a pool with that name already exists' in result:
+        if result is not None and "a pool with that name already exists" in result:
 
-            if self.zpool_properties(True).get('readonly') == 'on':
+            if self.zpool_properties(True).get("readonly") == "on":
                 # Zpool is already imported readonly. Export and re-import writeable.
                 result = self.export()
 
@@ -278,8 +283,8 @@ class BlockDeviceZfs(BlockDevice):
 
                 result = self.import_(pacemaker_ha_operation)
 
-                if (result is None) and (self.zpool_properties(True).get('readonly') == 'on'):
-                    return 'zfs pool %s can only be imported readonly, is it in use?' % self._device_path
+                if (result is None) and (self.zpool_properties(True).get("readonly") == "on"):
+                    return "zfs pool %s can only be imported readonly, is it in use?" % self._device_path
 
             else:
                 # zpool is already imported and writable, nothing to do.
@@ -299,15 +304,15 @@ class BlockDeviceZfs(BlockDevice):
         self._check_module()
 
         try:
-            self._assert_zpool('export')
+            self._assert_zpool("export")
         except NotZpoolException:
-            blockdevice = BlockDevice(self._supported_device_types[0], self._device_path.split('/')[0])
+            blockdevice = BlockDevice(self._supported_device_types[0], self._device_path.split("/")[0])
 
             return blockdevice.export()
 
-        result = Shell.run_canned_error_message(['zpool', 'export', self._device_path])
+        result = Shell.run_canned_error_message(["zpool", "export", self._device_path])
 
-        if result is not None and 'no such pool' in result:
+        if result is not None and "no such pool" in result:
             # Already not imported, nothing to do
             return None
 
@@ -320,13 +325,12 @@ class BlockDeviceZfs(BlockDevice):
 
         :return: None on success, error message on failure
         """
-        if managed_mode and os.path.isfile('/etc/hostid') is False:
+        if managed_mode and os.path.isfile("/etc/hostid") is False:
             # only create an ID if one doesn't already exist
-            result = Shell.run(['genhostid'])
+            result = Shell.run(["genhostid"])
 
             if result.rc != 0:
-                return 'Error preparing nodes for ZFS multimount protection. gethostid failed with %s' \
-                       % result.stderr
+                return "Error preparing nodes for ZFS multimount protection. gethostid failed with %s" % result.stderr
 
     @classmethod
     def terminate_driver(cls):

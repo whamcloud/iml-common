@@ -9,29 +9,31 @@ from iml_common.test.command_capture_testcase import CommandCaptureCommand
 
 class BaseTestFC:
     """ Dummy class to stop encapsulated abstract classes from being run by test runner """
+
     def __init__(self):
         pass
 
     class BaseTestFirewallControl(CommandCaptureTestCase):
         """ Abstract base class for testing the FirewallControl class """
+
         __metaclass__ = abc.ABCMeta
 
         # class variables
-        port = '88'
-        proto = 'tcp'
-        desc = 'test service'
-        address = '192.168.1.100'
+        port = "88"
+        proto = "tcp"
+        desc = "test service"
+        address = "192.168.1.100"
 
         # create example named tuple to compare with objects in rules list
         example_port_rule = FirewallControl.FirewallRule(port, proto, desc, persist=True, address=None)
         example_address_rule = FirewallControl.FirewallRule(0, proto, desc, persist=False, address=address)
 
         # base expected error strings
-        assert_address_with_port_msg = 'ing a specific port on a source address is not ' \
-                                       'supported, port value must be 0 (ANY)'
-        assert_address_persist_msg = 'ing all ports on a source address permanently is not ' \
-                                     'currently supported'
-        assert_port_not_persist_msg = 'ing a single port temporarily is not currently supported'
+        assert_address_with_port_msg = (
+            "ing a specific port on a source address is not " "supported, port value must be 0 (ANY)"
+        )
+        assert_address_persist_msg = "ing all ports on a source address permanently is not " "currently supported"
+        assert_port_not_persist_msg = "ing a single port temporarily is not currently supported"
 
         def init_firewall(self, el_version):
             self.el_version = el_version
@@ -39,13 +41,9 @@ class BaseTestFC:
         def setUp(self):
             super(BaseTestFC.BaseTestFirewallControl, self).setUp()
 
-            mock.patch.object(util, 'platform_info', util.PlatformInfo('Linux',
-                                                                       'CentOS',
-                                                                       0.0,
-                                                                       self.el_version,
-                                                                       0.0,
-                                                                       0,
-                                                                       '')).start()
+            mock.patch.object(
+                util, "platform_info", util.PlatformInfo("Linux", "CentOS", 0.0, self.el_version, 0.0, 0, "")
+            ).start()
 
             self.test_firewall = FirewallControl.create()
 
@@ -60,7 +58,7 @@ class BaseTestFC:
                 # shouldn't get here
                 self.assertTrue(False)
             except AssertionError as e:
-                self.assertEqual(str(e), 'open' + self.assert_address_with_port_msg)
+                self.assertEqual(str(e), "open" + self.assert_address_with_port_msg)
 
             # class instance should have record of added rule
             self.assertEqual(len(self.test_firewall.rules), 0)
@@ -75,7 +73,7 @@ class BaseTestFC:
                 # shouldn't get here
                 self.assertTrue(False)
             except AssertionError as e:
-                self.assertEqual(str(e), 'clos' + self.assert_address_with_port_msg)
+                self.assertEqual(str(e), "clos" + self.assert_address_with_port_msg)
 
             # class instance should have record of added rule
             self.assertEqual(len(self.test_firewall.rules), 0)
@@ -90,7 +88,7 @@ class BaseTestFC:
                 # shouldn't get here
                 self.assertTrue(False)
             except AssertionError as e:
-                self.assertEqual(str(e), 'open' + self.assert_address_persist_msg)
+                self.assertEqual(str(e), "open" + self.assert_address_persist_msg)
 
             # class instance should have record of added rule
             self.assertEqual(len(self.test_firewall.rules), 0)
@@ -105,7 +103,7 @@ class BaseTestFC:
                 # shouldn't get here
                 self.assertTrue(False)
             except AssertionError as e:
-                self.assertEqual(str(e), 'clos' + self.assert_address_persist_msg)
+                self.assertEqual(str(e), "clos" + self.assert_address_persist_msg)
 
             # class instance should have record of added rule
             self.assertEqual(len(self.test_firewall.rules), 0)
@@ -120,7 +118,7 @@ class BaseTestFC:
                 # shouldn't get here
                 self.assertTrue(False)
             except AssertionError as e:
-                self.assertEqual(str(e), 'open' + self.assert_port_not_persist_msg)
+                self.assertEqual(str(e), "open" + self.assert_port_not_persist_msg)
 
             # class instance should have record of added rule
             self.assertEqual(len(self.test_firewall.rules), 0)
@@ -135,7 +133,7 @@ class BaseTestFC:
                 # shouldn't get here
                 self.assertTrue(False)
             except AssertionError as e:
-                self.assertEqual(str(e), 'clos' + self.assert_port_not_persist_msg)
+                self.assertEqual(str(e), "clos" + self.assert_port_not_persist_msg)
 
             # class instance should have record of added rule
             self.assertEqual(len(self.test_firewall.rules), 0)
@@ -161,22 +159,22 @@ class BaseTestFC:
 
 class TestFirewallControlEL7(BaseTestFC.BaseTestFirewallControl):
 
-    not_running_msg = 'FirewallD is not running'
+    not_running_msg = "FirewallD is not running"
 
     def __init__(self, *args, **kwargs):
         super(TestFirewallControlEL7, self).__init__(*args, **kwargs)
-        self.init_firewall('7.X')
+        self.init_firewall("7.X")
 
     def test_open_port(self):
         # test opening a port, commands should be issued in order and the rule should be
         # recorded in 'rules' member of FirewallControl class instance
         self.assertEqual(len(self.test_firewall.rules), 0)
         self.add_commands(
-            CommandCaptureCommand(('/usr/bin/firewall-cmd',
-                                   '--add-port=%s/%s' % (self.port, self.proto))),
-            CommandCaptureCommand(('/usr/bin/firewall-cmd',
-                                   '--add-port=%s/%s' % (self.port, self.proto),
-                                   '--permanent')))
+            CommandCaptureCommand(("/usr/bin/firewall-cmd", "--add-port=%s/%s" % (self.port, self.proto))),
+            CommandCaptureCommand(
+                ("/usr/bin/firewall-cmd", "--add-port=%s/%s" % (self.port, self.proto), "--permanent")
+            ),
+        )
 
         response = self.test_firewall.add_rule(self.port, self.proto, self.desc, persist=True)
 
@@ -196,11 +194,11 @@ class TestFirewallControlEL7(BaseTestFC.BaseTestFirewallControl):
         self.assertEqual(len(self.test_firewall.rules), 1)
 
         self.add_commands(
-            CommandCaptureCommand(('/usr/bin/firewall-cmd',
-                                   '--remove-port=%s/%s' % (self.port, self.proto))),
-            CommandCaptureCommand(('/usr/bin/firewall-cmd',
-                                   '--remove-port=%s/%s' % (self.port, self.proto),
-                                   '--permanent')))
+            CommandCaptureCommand(("/usr/bin/firewall-cmd", "--remove-port=%s/%s" % (self.port, self.proto))),
+            CommandCaptureCommand(
+                ("/usr/bin/firewall-cmd", "--remove-port=%s/%s" % (self.port, self.proto), "--permanent")
+            ),
+        )
 
         response = self.test_firewall.remove_rule(self.port, self.proto, self.desc, persist=True)
 
@@ -215,14 +213,19 @@ class TestFirewallControlEL7(BaseTestFC.BaseTestFirewallControl):
         # rule should be recorded in 'rules' member of FirewallControl class instance
         self.assertEqual(len(self.test_firewall.rules), 0)
         self.add_commands(
-            CommandCaptureCommand(('/usr/bin/firewall-cmd', '--add-rich-rule='
-                                                            'rule family="ipv4" '
-                                                            'destination address="%s" '
-                                                            'protocol value="%s" '
-                                                            'accept' % (self.address, self.proto))))
+            CommandCaptureCommand(
+                (
+                    "/usr/bin/firewall-cmd",
+                    "--add-rich-rule="
+                    'rule family="ipv4" '
+                    'destination address="%s" '
+                    'protocol value="%s" '
+                    "accept" % (self.address, self.proto),
+                )
+            )
+        )
 
-        response = self.test_firewall.add_rule(0, self.proto, self.desc, persist=False,
-                                               address=self.address)
+        response = self.test_firewall.add_rule(0, self.proto, self.desc, persist=False, address=self.address)
 
         # None return value indicates success
         self.assertEqual(response, None)
@@ -240,11 +243,17 @@ class TestFirewallControlEL7(BaseTestFC.BaseTestFirewallControl):
         self.assertEqual(len(self.test_firewall.rules), 1)
 
         self.add_commands(
-            CommandCaptureCommand(('/usr/bin/firewall-cmd', '--remove-rich-rule='
-                                                            'rule family="ipv4" '
-                                                            'destination address="%s" '
-                                                            'protocol value="%s" '
-                                                            'accept' % (self.address, self.proto))))
+            CommandCaptureCommand(
+                (
+                    "/usr/bin/firewall-cmd",
+                    "--remove-rich-rule="
+                    'rule family="ipv4" '
+                    'destination address="%s" '
+                    'protocol value="%s" '
+                    "accept" % (self.address, self.proto),
+                )
+            )
+        )
 
         response = self.test_firewall.remove_rule(0, self.proto, self.desc, persist=False, address=self.address)
 
@@ -258,8 +267,9 @@ class TestFirewallControlEL7(BaseTestFC.BaseTestFirewallControl):
         # if the firewall is not running, add_rule should silently exit while logging a warning
         # test that we return None in this situation
         self.assertEqual(len(self.test_firewall.rules), 0)
-        self.add_command(('/usr/bin/firewall-cmd', '--add-port=%s/%s' % (self.port, self.proto)),
-                         rc=252, stdout=self.not_running_msg)
+        self.add_command(
+            ("/usr/bin/firewall-cmd", "--add-port=%s/%s" % (self.port, self.proto)), rc=252, stdout=self.not_running_msg
+        )
 
         response = self.test_firewall.add_rule(self.port, self.proto, self.desc, persist=True)
 

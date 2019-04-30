@@ -19,6 +19,7 @@ except:
         #         return int(result
         from local_settings import rpm_lib
     except:
+
         class rpm_lib(object):
             @classmethod
             def labelCompare(cls, a, b):
@@ -33,6 +34,7 @@ class VersionInfo(object):
     a limitation of our current use of plain json for messages in that all but the basic types have to be
     discarded during their transportation.
     """
+
     def __init__(self, epoch, version, release, arch):
         self.epoch = epoch
         self.version = version
@@ -46,4 +48,6 @@ class VersionInfo(object):
         return "epoch='%s', version='%s', release='%s', arch='%s'" % (self.epoch, self.version, self.release, self.arch)
 
     def __cmp__(self, other):
-        return rpm_lib.labelCompare((self.epoch, self.version, self.release), (other.epoch, other.version, other.release))
+        return rpm_lib.labelCompare(
+            (self.epoch, self.version, self.release), (other.epoch, other.version, other.release)
+        )

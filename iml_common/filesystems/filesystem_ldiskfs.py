@@ -14,13 +14,13 @@ from ..blockdevices.blockdevice_linux import BlockDeviceLinux
 class FileSystemLdiskfs(FileSystem, BlockDeviceLinux):
     # Lustre 2.x's ldiskfs filesystems appear as ext4, maybe we should translate that
     # in the read from blkid. But listing both is safe.
-    _supported_filesystems = ['ldiskfs', 'ext4']
+    _supported_filesystems = ["ldiskfs", "ext4"]
 
     @property
     def label(self):
         self._check_module()
 
-        blkid_output = shell.Shell.try_run(['blkid', '-c/dev/null', '-o', 'value', '-s', 'LABEL', self._device_path])
+        blkid_output = shell.Shell.try_run(["blkid", "-c/dev/null", "-o", "value", "-s", "LABEL", self._device_path])
 
         return blkid_output.strip()
 
@@ -28,7 +28,7 @@ class FileSystemLdiskfs(FileSystem, BlockDeviceLinux):
     def inode_size(self):
         self._check_module()
 
-        dumpe2fs_output = shell.Shell.try_run(['dumpe2fs', '-h', self._device_path])
+        dumpe2fs_output = shell.Shell.try_run(["dumpe2fs", "-h", self._device_path])
 
         return int(re.search("Inode size:\\s*(\\d+)$", dumpe2fs_output, re.MULTILINE).group(1))
 
@@ -45,12 +45,14 @@ class FileSystemLdiskfs(FileSystem, BlockDeviceLinux):
         return shell.Shell.try_run(["umount", os.path.realpath(self._device_path)])
 
     def mkfs(self, target_name, options):
-        shell.Shell.try_run(['mkfs.lustre'] + options + [self._device_path])
+        shell.Shell.try_run(["mkfs.lustre"] + options + [self._device_path])
 
-        return {'uuid': self.uuid,
-                'filesystem_type': self.filesystem_type,
-                'inode_size': self.inode_size,
-                'inode_count': self.inode_count}
+        return {
+            "uuid": self.uuid,
+            "filesystem_type": self.filesystem_type,
+            "inode_size": self.inode_size,
+            "inode_count": self.inode_count,
+        }
 
     def mkfs_options(self, target):
         mkfsoptions = []

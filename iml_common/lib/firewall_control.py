@@ -19,10 +19,10 @@ class FirewallControl(object):
 
     platform_use = None
 
-    FirewallRule = namedtuple('FirewallRule', ('port', 'protocol', 'description', 'persist', 'address'))
+    FirewallRule = namedtuple("FirewallRule", ("port", "protocol", "description", "persist", "address"))
 
     # identifiers for results of firewall operations
-    SuccessCode = enum('UPDATED', 'DUPLICATE', 'NOTRUNNING', 'NORULES')
+    SuccessCode = enum("UPDATED", "DUPLICATE", "NOTRUNNING", "NORULES")
 
     def __init__(self, logger=None):
         self.logger = logger
@@ -31,13 +31,17 @@ class FirewallControl(object):
     def _log(self, msg, level):
         """ utility function for using reference to an external logger """
         if self.logger and hasattr(self.logger, level):
-            getattr(self.logger, level)('{0}: {1}'.format(self.__class__.__name__, msg))
+            getattr(self.logger, level)("{0}: {1}".format(self.__class__.__name__, msg))
 
     @classmethod
     def _applicable(cls):
         from .util import platform_info
-        return cls.platform_use and (platform_info.system == 'Linux') and \
-               cls.platform_use == platform_info.distro_version_full.split('.')[0]
+
+        return (
+            cls.platform_use
+            and (platform_info.system == "Linux")
+            and cls.platform_use == platform_info.distro_version_full.split(".")[0]
+        )
 
     @classmethod
     def create(cls, logger=None):
@@ -46,8 +50,7 @@ class FirewallControl(object):
 
             return required_class(logger=logger)
         except StopIteration:
-            raise RuntimeError('Current platform version not supported (supported: {})'.format(
-                all_subclasses(cls)))
+            raise RuntimeError("Current platform version not supported (supported: {})".format(all_subclasses(cls)))
 
     def add_rule(self, port, proto, desc, persist=True, address=None):
         """"Open port(s) in firewall
@@ -58,22 +61,23 @@ class FirewallControl(object):
         :param address: if present, open all ports to this destination address
         :return: error string or None for success
         """
-        self._log('Opening firewall for %s' % desc, 'info')
+        self._log("Opening firewall for %s" % desc, "info")
         if address:
-            assert port == 0, 'opening a specific port on a source address ' \
-                              'is not supported, port value must be 0 (ANY)'
+            assert port == 0, (
+                "opening a specific port on a source address " "is not supported, port value must be 0 (ANY)"
+            )
 
-            assert persist is False, 'opening all ports on a source address ' \
-                                     'permanently is not currently supported'
+            assert persist is False, "opening all ports on a source address " "permanently is not currently supported"
 
             retval = self._add_address(address, proto)
         else:
-            assert persist is True, 'opening a single port temporarily is not currently supported'
+            assert persist is True, "opening a single port temporarily is not currently supported"
 
             retval = self._add_port(port, proto)
 
-        if (retval == self.SuccessCode.UPDATED) and (self.FirewallRule(port, proto, desc, persist, address)
-                                                     not in self.rules):
+        if (retval == self.SuccessCode.UPDATED) and (
+            self.FirewallRule(port, proto, desc, persist, address) not in self.rules
+        ):
             # only add to list if rule successfully added
             self.rules.append(self.FirewallRule(port, proto, desc, persist, address))
 
@@ -88,17 +92,17 @@ class FirewallControl(object):
         :param address: if present, remove rule to open all ports to this destination address
         :return: error string or None for success
         """
-        self._log('Closing firewall for %s' % desc, 'info')
+        self._log("Closing firewall for %s" % desc, "info")
         if address:
-            assert port == 0, 'closing a specific port on a source address is not '\
-                              'supported, port value must be 0 (ANY)'
+            assert port == 0, (
+                "closing a specific port on a source address is not " "supported, port value must be 0 (ANY)"
+            )
 
-            assert persist is False, 'closing all ports on a source address permanently is not ' \
-                                     'currently supported'
+            assert persist is False, "closing all ports on a source address permanently is not " "currently supported"
 
             retval = self._remove_address(address, proto)
         else:
-            assert persist is True, 'closing a single port temporarily is not currently supported'
+            assert persist is True, "closing a single port temporarily is not currently supported"
 
             retval = self._remove_port(port, proto)
 
@@ -140,11 +144,11 @@ class FirewallControl(object):
 class FirewallControlEL7(FirewallControl):
     """ concrete subclass of FirewallControl abstract base class for EL7 firewall control """
 
-    platform_use = '7'
+    platform_use = "7"
 
     # return code for 'FirewallD is not running'
     not_running_rc = 252
-    duplicate_msg = 'Warning: ALREADY_ENABLED\n'
+    duplicate_msg = "Warning: ALREADY_ENABLED\n"
 
     def _port_rule(self, act, port, proto):
         """Wrapper for port-rule firewall-cmd shell invocations. Command issued twice, once WITH
@@ -154,7 +158,7 @@ class FirewallControlEL7(FirewallControl):
         Note: rule is activated on the default zone which is assumed is bound to public
         facing interfaces
         """
-        arg_list = ['/usr/bin/firewall-cmd', '--%s-port=%s/%s' % (act, port, proto)]
+        arg_list = ["/usr/bin/firewall-cmd", "--%s-port=%s/%s" % (act, port, proto)]
 
         result = shell.Shell.run(arg_list)
 
@@ -168,7 +172,7 @@ class FirewallControlEL7(FirewallControl):
         if result.stdout == self.duplicate_msg:
             return self.SuccessCode.DUPLICATE
 
-        error = shell.Shell.run_canned_error_message(arg_list + ['--permanent'])
+        error = shell.Shell.run_canned_error_message(arg_list + ["--permanent"])
 
         return error or self.SuccessCode.UPDATED
 
@@ -182,13 +186,12 @@ class FirewallControlEL7(FirewallControl):
         facing interfaces, rule matches traffic to a destination address on the target
         """
         # temporary firewall rich rule specification
-        rich_rule_spec = 'rule family="ipv4" destination address="%s" protocol value="%s" accept' \
-                         % (daddress, proto)
+        rich_rule_spec = 'rule family="ipv4" destination address="%s" protocol value="%s" accept' % (daddress, proto)
 
         # when constructing the "rich rule" instruction parameter for firewall-cmd we don't have
         # to encapsulate the rule spec in single quotes as you would in bash because shell.Shell.run
         # implicitly assumes it is a value for a single keyword argument
-        arg_list = ['/usr/bin/firewall-cmd', '--%s-rich-rule=%s' % (act, rich_rule_spec)]
+        arg_list = ["/usr/bin/firewall-cmd", "--%s-rich-rule=%s" % (act, rich_rule_spec)]
 
         result = shell.Shell.run(arg_list)
 
@@ -206,20 +209,20 @@ class FirewallControlEL7(FirewallControl):
 
     def _add_port(self, port, proto):
         """ EL7 implementation of opening port on firewall using linux shell """
-        return self._port_rule('add', port, proto)
+        return self._port_rule("add", port, proto)
 
     def _remove_port(self, port, proto):
         """ EL7 implementation of removing rule to open port on firewall using linux shell """
-        return self._port_rule('remove', port, proto)
+        return self._port_rule("remove", port, proto)
 
     def _add_address(self, address, proto):
         """EL7 implementation of opening all ports to a specific address on firewall using
          linux shell
         """
-        return self._address_rule('add', address, proto)
+        return self._address_rule("add", address, proto)
 
     def _remove_address(self, address, proto):
         """EL7 implementation of removing rule to open ports to a specific address on
         firewall using linux shell
         """
-        return self._address_rule('remove', address, proto)
+        return self._address_rule("remove", address, proto)

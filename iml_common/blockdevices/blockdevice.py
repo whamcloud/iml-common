@@ -24,8 +24,8 @@ class BlockDevice(object):
     # The split for multiple properties in the lustre configuration storage seems to be inconsistent
     # so create a look up table for the splitters.
     lustre_property_delimiters = defaultdict(lambda: "")
-    lustre_property_delimiters['failover.node'] = ':'
-    lustre_property_delimiters['mgsnode'] = ':'
+    lustre_property_delimiters["failover.node"] = ":"
+    lustre_property_delimiters["mgsnode"] = ":"
 
     class UnknownBlockDevice(KeyError):
         pass
@@ -39,11 +39,13 @@ class BlockDevice(object):
                 if device in _cached_device_types:
                     device_type = _cached_device_types[device]
                 else:
-                    device_type = 'linux'
+                    device_type = "linux"
             else:
                 _cached_device_types[device] = device_type
 
-            subtype = next(klass for klass in util.all_subclasses(BlockDevice) if device_type in klass._supported_device_types)
+            subtype = next(
+                klass for klass in util.all_subclasses(BlockDevice) if device_type in klass._supported_device_types
+            )
 
             if cls != subtype:
                 return subtype.__new__(subtype, device_type, device)
@@ -105,7 +107,7 @@ class BlockDevice(object):
         """
         pass
 
-    TargetsInfo = namedtuple('TargetsInfo', ['names', 'params'])
+    TargetsInfo = namedtuple("TargetsInfo", ["names", "params"])
 
     @abc.abstractmethod
     def targets(self, uuid_name_to_target, device, log):
@@ -140,7 +142,7 @@ class BlockDevice(object):
         :param log: The logger to use for log messages.
         :return: None on success or error message on failure
         """
-        shell_result = shell.Shell.run(['lctl', 'erase_lcfg', filesystem_name])
+        shell_result = shell.Shell.run(["lctl", "erase_lcfg", filesystem_name])
 
         if shell_result.rc != 0:
             return "Purge filesystem failed to purge %s with error '%s'" % (filesystem_name, shell_result.stderr)

@@ -18,8 +18,12 @@ class BaseShell(object):
             self.command = " ".join(command)
 
         def __str__(self):
-            return "Error (%s) running '%s': '%s' '%s'" % (self.result.rc, self.command,
-                                                           self.result.stdout, self.result.stderr)
+            return "Error (%s) running '%s': '%s' '%s'" % (
+                self.result.rc,
+                self.command,
+                self.result.stdout,
+                self.result.stderr,
+            )
 
         # Keeping for backwards compatibility, will be removed over time.
         @property
@@ -38,9 +42,9 @@ class BaseShell(object):
             return self.result.stderr
 
     # Effectively no autotimeout for commands.
-    SHELLTIMEOUT = 0xfffffff
+    SHELLTIMEOUT = 0xFFFFFFF
 
-    RunResult = collections.namedtuple("RunResult", ['rc', 'stdout', 'stderr', 'timeout'])
+    RunResult = collections.namedtuple("RunResult", ["rc", "stdout", "stderr", "timeout"])
 
     @classmethod
     def _run(cls, arg_list, logger, monitor_func, timeout, shell=False):
@@ -48,7 +52,7 @@ class BaseShell(object):
         stub this function while retaining the related behaviour of run()
         """
 
-        assert type(arg_list) in [list, str, unicode], 'arg list must be list or str :%s' % type(arg_list)
+        assert type(arg_list) in [list, str, unicode], "arg list must be list or str :%s" % type(arg_list)
 
         # Allow simple commands to just be presented as a string. However do not start formatting the string this
         # will be rejected in a code review. If it has args present them as a list.
@@ -61,18 +65,14 @@ class BaseShell(object):
         stderr_fd = tempfile.TemporaryFile()
 
         try:
-            p = subprocess.Popen(arg_list,
-                                 stdout=stdout_fd,
-                                 stderr=stderr_fd,
-                                 close_fds=True,
-                                 shell=shell)
+            p = subprocess.Popen(arg_list, stdout=stdout_fd, stderr=stderr_fd, close_fds=True, shell=shell)
 
             # Rather than using p.wait(), we do a slightly more involved poll/backoff, in order
             # to poll the thread_state.teardown event as well as the completion of the subprocess.
             # This is done to allow cancellation of subprocesses
             rc = None
             max_wait = 1.0
-            wait = 1.0E-3
+            wait = 1.0e-3
             timeout += time.time()
             while rc is None:
                 rc = p.poll()
@@ -86,19 +86,23 @@ class BaseShell(object):
                         p.kill()
                         stdout_fd.seek(0)
                         stderr_fd.seek(0)
-                        return cls.RunResult(254,
-                                             stdout_fd.read().decode('ascii', 'ignore'),
-                                             stderr_fd.read().decode('ascii', 'ignore'),
-                                             True)
+                        return cls.RunResult(
+                            254,
+                            stdout_fd.read().decode("ascii", "ignore"),
+                            stderr_fd.read().decode("ascii", "ignore"),
+                            True,
+                        )
                     elif wait < max_wait:
                         wait *= 2.0
                 else:
                     stdout_fd.seek(0)
                     stderr_fd.seek(0)
-                    return cls.RunResult(rc,
-                                         stdout_fd.read().decode('ascii', 'ignore'),
-                                         stderr_fd.read().decode('ascii', 'ignore'),
-                                         False)
+                    return cls.RunResult(
+                        rc,
+                        stdout_fd.read().decode("ascii", "ignore"),
+                        stderr_fd.read().decode("ascii", "ignore"),
+                        False,
+                    )
         finally:
             stdout_fd.close()
             stderr_fd.close()
@@ -146,10 +150,10 @@ class BaseShell(object):
         result = cls.run(arg_list)
 
         if result.rc != 0:
-            return "Error (%s) running '%s': '%s' '%s'" % (result.rc, " ".join(arg_list),
-                                                           result.stdout, result.stderr)
+            return "Error (%s) running '%s': '%s' '%s'" % (result.rc, " ".join(arg_list), result.stdout, result.stderr)
 
         return None
+
 
 # By default Shell is this BaseShell class, and other iml_common modules use BaseShell via Shell by default.
 # However consumers (namely the agent today) may change Shell to reference their own SubClass version and this will
