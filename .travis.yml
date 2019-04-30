@@ -1,28 +1,36 @@
 language: python
 python: '2.7'
-sudo: required
-addons:
-  apt:
-    update: true
 services:
   - docker
 jobs:
   include:
   - stage: test
-    env: Type='virus scan'
-    script:
-    - ./include/travis/virus-scan.sh
-  - stage: test
-    env: Type='module test'
+    name: "module test"
     script:
     - py.test
   - stage: test
-    env: Type='mock build test'
+    name: "Format Check"
+    python: "3.6"
+    install:
+      - pip install black
     script:
-    - ./include/travis/run_in_centos7_docker.sh include/travis/mock_build_test.sh
+      - black --check ./
+  - stage: test
+    name: "copr build test"
+    script:
+    - export SPEC=python-iml-common.spec
+    - docker run -it -e SPEC="$SPEC" -e LOCAL_ONLY="True" -v $(pwd):/build:rw imlteam/copr
+    - ((`find _topdir/RPMS -name *.rpm | wc -l` > 0))
+  - stage: cd
+    name: "Continuous Deployment"
+    script:
+      - export OWNER=managerforlustre
+      - export PROJECT=manager-for-lustre-devel
+      - export PACKAGE=python-iml-common1.4
+      - export SPEC=python-iml-common.spec
+      - docker run -it -e OWNER="$OWNER" -e PROJECT="$PROJECT" -e PACKAGE="$PACKAGE" -e SPEC="$SPEC" -e KEY="$encrypted_253525cedcf6_key" -e IV="$encrypted_253525cedcf6_iv" -v $(pwd):/build:rw imlteam/copr
   - stage: deploy-pypi
-    if: branch =~ ^v\d+\.\d+\.\d+-1.*$
-    env: Type='PyPi deploy'
+    name: "PyPi deploy"
     script: skip
     deploy:
       provider: pypi
@@ -34,14 +42,18 @@ jobs:
         distributions: sdist bdist_wheel
     skip_upload_docs: true
   - stage: deploy-copr
-    if: branch =~ ^v\d+\.\d+\.\d+-.+$
-    env: Type='Copr deploy'
-    script: skip
-    before_deploy:
-    - include/travis/copr-deploy.sh prepare
-    deploy:
-      skip_cleanup: true
-      provider: script
-      script: ./travis_wait "./include/travis/run_in_centos7_docker.sh include/travis/copr-deploy.sh build"
-      on:
-        all_branches: true
+    name: "Copr deploy"
+    script:
+        - export OWNER=managerforlustre
+        - export PROJECT=manager-for-lustre
+        - export PACKAGE=python-iml-common1.4
+        - export SPEC=python-iml-common.spec
+        - docker run -it -e PROD="true" -e OWNER="$OWNER" -e PROJECT="$PROJECT" -e PACKAGE="$PACKAGE" -e SPEC="$SPEC" -e KEY="$encrypted_253525cedcf6_key" -e IV="$encrypted_253525cedcf6_iv" -v $(pwd):/build:rw imlteam/copr
+stages:
+  - test
+  - name: cd
+    if: branch = master AND type = push AND fork = false
+  - name: deploy-pypi
+    if: branch =~ ^v\d+\.\d+\.\d+$
+  - name: deploy-copr
+    if: branch =~ ^v\d+\.\d+\.\d+$
