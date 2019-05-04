@@ -41,11 +41,11 @@ jobs:
         all_branches: true
         distributions: sdist bdist_wheel
     skip_upload_docs: true
-  - stage: deploy-copr
-    name: "Copr deploy"
+  - stage: deploy-copr-r5.0
+    name: "Copr 5.0 deploy"
     script:
         - export OWNER=managerforlustre
-        - export PROJECT=manager-for-lustre
+        - export PROJECT=manager-for-lustre-5.0
         - export PACKAGE=python-iml-common1.4
         - export SPEC=python-iml-common.spec
         - docker run -it -e PROD="true" -e OWNER="$OWNER" -e PROJECT="$PROJECT" -e PACKAGE="$PACKAGE" -e SPEC="$SPEC" -e KEY="$encrypted_253525cedcf6_key" -e IV="$encrypted_253525cedcf6_iv" -v $(pwd):/build:rw imlteam/copr
@@ -55,5 +55,5 @@ stages:
     if: branch = master AND type = push AND fork = false
   - name: deploy-pypi
     if: branch =~ ^v\d+\.\d+\.\d+$
-  - name: deploy-copr
-    if: branch =~ ^v\d+\.\d+\.\d+$
+  - name: deploy-copr-r5.0
+    if: branch =~ ^v\d+\.\d+\.\d+-.+-r5\.0$
