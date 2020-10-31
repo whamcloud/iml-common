@@ -1,4 +1,4 @@
-from mock import patch
+from unittest.mock import patch
 from iml_common.lib.util import ExpiringList
 from iml_common.test.iml_unit_testcase import ImlUnitTestCase
 
@@ -36,10 +36,10 @@ class TestExpiringList(ImlUnitTestCase):
         self.assertEqual("['value']", str(self.exping_list))
 
     def test_multiple_entries(self):
-        map(self.exping_list.append, range(1, 101))
+        list(map(self.exping_list.append, range(1, 101)))
         self.assertEqual(100, len(self.exping_list))
         self.mock_time.return_value = 30
-        map(self.exping_list.append, range(101, 201))
+        list(map(self.exping_list.append, range(101, 201)))
         self.assertEqual(100, len(self.exping_list))
         self.mock_time.return_value = 60
         self.exping_list.append("value")

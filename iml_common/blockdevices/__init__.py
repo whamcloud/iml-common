@@ -3,6 +3,6 @@
 # license that can be found in the LICENSE file.
 
 
-import blockdevice_linux
-import blockdevice_zfs
-import blockdevice_lvm_volume
+from . import blockdevice_linux
+from . import blockdevice_zfs
+from . import blockdevice_lvm_volume

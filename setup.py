@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (c) 2018 DDN. All rights reserved.
 # Use of this source code is governed by a MIT-style
 # license that can be found in the LICENSE file.
 
 from setuptools import setup, find_packages
-from iml_common import package_version
 
 # To use a consistent encoding
 from codecs import open
@@ -21,13 +20,13 @@ excludes = ["*tests*"]
 
 setup(
     name="iml-common",
-    version=package_version(),
+    version="1.5.0",
     author="Whamcloud",
     author_email="iml@whamcloud.com",
     url="https://pypi.python.org/pypi/iml-common",
     packages=find_packages(exclude=excludes),
-    include_package_data=True,
     license="MIT",
+    test_suite="tests",
     description="Common library used by multiple IML components",
     long_description=long_description,
     classifiers=[

@@ -3,7 +3,6 @@
 # license that can be found in the LICENSE file.
 
 
-import sys
 import traceback
 
 """
@@ -22,8 +21,7 @@ def exceptionSandBox(logger, exception_value, message="Exception raised in sandb
             try:
                 return function(*args, **kwargs)
             except Exception:
-                ex_type, ex, tb = sys.exc_info()
-                data = traceback.format_exc(tb).splitlines()
+                data = traceback.format_exc().splitlines()
                 logger.debug("%s:\n%s" % (message + " START", "\n".join(data[1:] + [message + " END"])))
             return exception_value
 

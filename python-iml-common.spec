@@ -1,77 +1,60 @@
-# Created by pyp2rpm-3.2.2
-%global pypi_name iml-common
-%{!?name: %global name python2-%{pypi_name}}
-%{?!version: %global version 1.4.5}
-%global major_minor %(version="%{version}"; v=($(echo ${version//./ })); echo ${v[0]}.${v[1]})
-%global rpm_name %{pypi_name}%{major_minor}
+%global srcname iml-common
 
-%{?dist_version: %global source https://github.com/whamcloud/%{pypi_name}/archive/%{dist_version}.tar.gz}
+%{?dist_version: %global source https://github.com/whamcloud/%{srcname}/archive/%{dist_version}.tar.gz}
 %{?dist_version: %global archive_version %{dist_version}}
-%{?!dist_version: %global source https://files.pythonhosted.org/packages/source/i/%{pypi_name}/%{pypi_name}-%{version}.tar.gz}
+%{?!dist_version: %global source https://files.pythonhosted.org/packages/source/i/%{srcname}/%{srcname}-%{version}.tar.gz}
 %{?!dist_version: %global archive_version %{version}}
 
-Name:           python-%{rpm_name}
-Version:        1.4.5
+Name:           python-%{srcname}
+Version:        1.5.0
 # Release Start
 Release:    1%{?dist}
 # Release End
 Summary:        Common library used by multiple IML components
 License:        MIT
-URL:            https://pypi.python.org/pypi/%{pypi_name}
+URL:            https://pypi.python.org/pypi/%{srcname}
 Source0:        %{source}
-Group: Development/Libraries
 BuildArch:      noarch
-BuildRequires:  python2-devel
-BuildRequires:  python-setuptools
+Group: Development/Libraries
+Obsoletes:      python-iml-common1.4
 
-%description
+%global _description %{expand:
 A Python package that contains common components for the IML project Different
 areas of the IML project utilise common code that is shared distributed through
 this package.This packaging intends to improve code reuse and componentization
-within the IML project.
+within the IML project.}
 
-%package -n     python2-%{rpm_name}
+%description %_description
+
+%package -n python3-%{srcname}
 Summary:        %{summary}
-%{?python_provide:%python_provide python2-%{rpm_name}}
-Obsoletes:       python2-%{pypi_name}1.0 python2-%{pypi_name}1.1
-Obsoletes:       python2-%{pypi_name}1.2 python2-%{pypi_name}1.3
+BuildRequires:  python3-devel
+BuildRequires:  python3-setuptools
+Requires:       python36-distro
+%{?python_provide:%python_provide python3-%{srcname}}
 
-%description -n python2-%{rpm_name}
-A Python package that contains common components for the IML project.  Different
-areas of the IML project utilise common code that is shared distributed through
-this package.  This packaging intends to improve code reuse and componentization
-within the IML project.
+%description -n python3-%{srcname} %_description
 
 %prep
-%if %{?dist_version:1}%{!?dist_version:0}
-%setup -n %{pypi_name}-%(echo %{archive_version} | sed -Ee '/^v([0-9]+\.)[0-9]+/s/^v(.*)/\1/')
-%else
-%setup -c -n %{rpm_name}-%{version}
-# Remove bundled egg-info
-rm -rf %{rpm_name}.egg-info
-cd ..
-mv %{rpm_name}-%{version}/%{pypi_name}-%{version} ./%{pypi_name}-%{version}
-rmdir %{rpm_name}-%{version}
-mv %{pypi_name}-%{version} %{rpm_name}-%{version}
-%endif
+%autosetup -n %{srcname}-%{version}
 
 %build
-%{__python} setup.py build
+%py3_build
 
 %install
-%{__python} setup.py install --skip-build --root %{buildroot}
+%py3_install
 
-%check
-%{__python} setup.py test
-
-%files -n python2-%{rpm_name}
+%files -n python3-iml-common
 %defattr(-,root,root,-)
 %license license.txt
 %doc README.md README.rst
-%{python2_sitelib}/iml_common
-%{python2_sitelib}/%(a=%{pypi_name}; echo ${a//-/_})-*.egg-info/*
+%{python3_sitelib}/iml_common-*.egg-info/
+%{python3_sitelib}/iml_common/
 
 %changelog
+* Mon Nov 2 2020 Joe Grund <jgrund@whamcloud.com> 1.5.0-1
+- Update to Python 3
+
 * Tue Apr 30 2019 Joe Grund <jgrund@whamcloud.com> 1.4.5-1
 - Update to imlteam/copr build system
 

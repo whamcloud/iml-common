@@ -3,9 +3,8 @@
 # license that can be found in the LICENSE file.
 
 
-import mock
-
-from django.utils import unittest
+from unittest import mock
+import unittest
 
 from iml_common.lib import util
 

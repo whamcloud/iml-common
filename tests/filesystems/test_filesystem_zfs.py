@@ -1,4 +1,4 @@
-import mock
+from unittest import mock
 
 from iml_common.filesystems.filesystem_zfs import FileSystemZfs
 from iml_common.blockdevices.blockdevice_zfs import BlockDeviceZfs

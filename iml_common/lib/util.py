@@ -10,8 +10,9 @@ import itertools
 import threading
 import platform
 from collections import namedtuple
-from collections import MutableSequence
+from collections.abc import MutableSequence
 import signal
+import distro
 
 
 ExpiringValue = namedtuple("ExpiringValue", ["value", "expiry"])
@@ -117,7 +118,7 @@ def enum(*sequential, **named):
     :return: Enum type object with numbered (sequential) or explicit value (keyword) attributes
     """
     enums = dict(zip(sequential, range(len(sequential))), **named)
-    reverse = dict((value, key) for key, value in enums.iteritems())
+    reverse = dict((value, key) for key, value in enums.items())
     enums["reverse_mapping"] = reverse
     return type("Enum", (), enums)
 
@@ -143,12 +144,15 @@ For a Mac, Windows or non-Centos Linux it pretends to be Centos 7.2.
 
 :return: PlatformInfo named tuple
 """
-if platform.system() == "Linux" and platform.linux_distribution()[0] == "CentOS":
+version = distro.version(best=True)
+(id_name, _, codename) = distro.linux_distribution(full_distribution_name=False)
+
+if platform.system() == "Linux" and id_name == "centos":
     platform_info = PlatformInfo(
         platform.system(),
-        platform.linux_distribution()[0],
-        float(".".join(platform.linux_distribution()[1].split(".")[:2])),
-        platform.linux_distribution()[1],
+        "CentOS",
+        float(".".join(version.split(".")[:2])),
+        version,
         float("%s.%s" % (platform.python_version_tuple()[0], platform.python_version_tuple()[1])),
         int(platform.python_version_tuple()[2]),
         platform.release(),

@@ -7,7 +7,7 @@ import os
 import re
 from collections import defaultdict
 
-from blockdevice import BlockDevice
+from .blockdevice import BlockDevice
 from ..lib.shell import Shell
 
 try:
@@ -231,9 +231,12 @@ class BlockDeviceZfs(BlockDevice):
         for zfs_property in zfs_properties:
             if zfs_property.startswith("lustre:"):
                 lustre_property = zfs_property.split(":")[1]
-                params[lustre_property].extend(
-                    re.split(BlockDeviceZfs.lustre_property_delimiters[lustre_property], zfs_properties[zfs_property])
-                )
+                delim = BlockDeviceZfs.lustre_property_delimiters[lustre_property]
+
+                if delim == "":
+                    params[lustre_property].extend([zfs_properties[zfs_property]])
+                else:
+                    params[lustre_property].extend(re.split(delim, zfs_properties[zfs_property]))
 
         if name.find("ffff") != -1:
             if log:

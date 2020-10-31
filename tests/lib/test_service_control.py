@@ -1,4 +1,4 @@
-import mock
+from unittest import mock
 
 from iml_common.lib import util
 from iml_common.lib.service_control import ServiceControl

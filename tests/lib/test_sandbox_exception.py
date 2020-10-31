@@ -1,6 +1,5 @@
-import mock
-
-from django.utils import unittest
+from unittest import mock
+import unittest
 from iml_common.lib.exception_sandbox import exceptionSandBox
 
 
