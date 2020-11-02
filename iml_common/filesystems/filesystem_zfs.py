@@ -5,7 +5,7 @@
 
 from ..lib import shell
 from ..blockdevices.blockdevice_zfs import BlockDeviceZfs
-from filesystem import FileSystem
+from .filesystem import FileSystem
 
 
 class FileSystemZfs(FileSystem, BlockDeviceZfs):

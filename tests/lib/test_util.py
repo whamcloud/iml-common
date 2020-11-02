@@ -1,4 +1,4 @@
-import mock
+from unittest import mock
 from os import environ
 from iml_common.lib import util
 from iml_common.test.iml_unit_testcase import ImlUnitTestCase

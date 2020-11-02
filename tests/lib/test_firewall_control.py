@@ -1,4 +1,4 @@
-import mock
+from unittest import mock
 import abc
 
 from iml_common.lib import util

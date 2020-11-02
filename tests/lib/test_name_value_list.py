@@ -1,6 +1,5 @@
 import json
-
-from django.utils import unittest
+import unittest
 
 from iml_common.lib.name_value_list import NameValueList
 
@@ -25,8 +24,8 @@ class TestNameValueList(unittest.TestCase):
 
     def test_creation_correction(self):
         for value, raw_value in zip(self.values, self.raw_values):
-            self.assertEqual(value.name, raw_value.keys()[0])
-            self.assertEqual(value.value, raw_value.values()[0])
+            self.assertEqual(value.name, list(raw_value)[0])
+            self.assertEqual(value.value, list(raw_value.values())[0])
 
     def test_name_value_create(self):
         self.values["execute"] = True

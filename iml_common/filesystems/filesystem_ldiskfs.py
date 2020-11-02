@@ -7,7 +7,7 @@ import os
 import re
 
 from ..lib import shell
-from filesystem import FileSystem
+from .filesystem import FileSystem
 from ..blockdevices.blockdevice_linux import BlockDeviceLinux
 
 

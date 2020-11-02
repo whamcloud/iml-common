@@ -53,7 +53,7 @@ class FirewallControl(object):
             raise RuntimeError("Current platform version not supported (supported: {})".format(all_subclasses(cls)))
 
     def add_rule(self, port, proto, desc, persist=True, address=None):
-        """"Open port(s) in firewall
+        """Open port(s) in firewall
 
         :param port: port number
         :param proto: protocol string eg. udp
@@ -85,7 +85,7 @@ class FirewallControl(object):
         return None if (retval in self.SuccessCode.reverse_mapping.keys()) else retval
 
     def remove_rule(self, port, proto, desc, persist=True, address=None):
-        """"Close port(s) in firewall
+        """Close port(s) in firewall
         :param port: port number
         :param proto: protocol string eg. udp
         :param desc: description of service to be using this port
@@ -217,7 +217,7 @@ class FirewallControlEL7(FirewallControl):
 
     def _add_address(self, address, proto):
         """EL7 implementation of opening all ports to a specific address on firewall using
-         linux shell
+        linux shell
         """
         return self._address_rule("add", address, proto)
 

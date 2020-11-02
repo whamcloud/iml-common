@@ -1,52 +1,51 @@
 language: python
-python: '2.7'
+python: "3.8"
 services:
   - docker
 jobs:
   include:
-  - stage: test
-    name: "module test"
-    script:
-    - py.test
-  - stage: test
-    name: "Format Check"
-    python: "3.6"
-    install:
-      - pip install black
-    script:
-      - black --check ./
-  - stage: test
-    name: "copr build test"
-    script:
-    - export SPEC=python-iml-common.spec
-    - docker run -it -e SPEC="$SPEC" -e LOCAL_ONLY="True" -v $(pwd):/build:rw imlteam/copr
-    - ((`find _topdir/RPMS -name *.rpm | wc -l` > 0))
-  - stage: cd
-    name: "Continuous Deployment"
-    script:
-      - export OWNER=managerforlustre
-      - export PROJECT=manager-for-lustre-devel
-      - export PACKAGE=python-iml-common1.4
-      - export SPEC=python-iml-common.spec
-      - docker run -it -e OWNER="$OWNER" -e PROJECT="$PROJECT" -e PACKAGE="$PACKAGE" -e SPEC="$SPEC" -e KEY="$encrypted_253525cedcf6_key" -e IV="$encrypted_253525cedcf6_iv" -v $(pwd):/build:rw imlteam/copr
-  - stage: deploy-pypi
-    name: "PyPi deploy"
-    script: skip
-    deploy:
-      provider: pypi
-      user: iml
-      password:
-        secure: iQ657CWtGaweT0I+zD379ahWWTWQTAtOX59c9EGDDPQ2GvIRnL0qR9NhRKf1kFx0rja1U0rumGio6B6mVU4TY19KHcGa6/6VAZcklXeJ1NmkdDahDZxKchvv9zovQuqf1LaMHhbqkCKo8csOeCToL+lF7QeOKjBOvzUB/a2i+zSREkpLlT7DrHIwyRLZe4626g5ZPz6m1C7VCG599MEnpe6aqgcj04Vcn09cP88GleHWL98OIhyuuJanaRdxApfYih4ZCFSPwYccH6RLSkevYsPjjiGtfXIHLaDceL9m4V0qzXtQ5F0f2FgVNkArRkJHE4RXliqsOEOG/AKiHZaLxYqJHuljguAkT3D3mAb29MbkL07SBGwV4eHtW6m3YKPHR1G+ZzCmLHXio9FVGfwG4rRIruOBlnpBral7umFuol14bEsmSgoFFQfG6ouq90M3hy81SDLrJXeb60hXsLlkxEXC6wERL9wgFeiT0sbVdqNI94YQb31/dlVfL/upRbN5qpTTE9nnnnIWyCC+x6yBy4H6KmhKZxkejTvmofzLlvx3t7ySVx9Z6GUEe7XLBsGR2Gak/2X6X+zYOwbysnCXInQlltJrWy0BUFBS4Oz0WhQrP/TDhzU4cTYytVnxNCtGJXG/UA3dg7ZEfnG1QuiY8FlI+zdpZGFoUdurSMq4Tgo=
-      on:
-        all_branches: true
-        distributions: sdist bdist_wheel
-    skip_upload_docs: true
-  - stage: deploy-copr-r5.0
-    name: "Copr 5.0 deploy"
-    script:
+    - stage: test
+      name: "module test"
+      script:
+        - py.test
+    - stage: test
+      name: "Format Check"
+      install:
+        - pip install black
+      script:
+        - black --check ./
+    - stage: test
+      name: "copr build test"
+      script:
+        - export SPEC=python-iml-common.spec
+        - docker run -it -e SPEC="$SPEC" -e LOCAL_ONLY="True" -v $(pwd):/build:rw imlteam/copr
+        - ((`find _topdir/RPMS -name *.rpm | wc -l` > 0))
+    - stage: cd
+      name: "Continuous Deployment"
+      script:
+        - export OWNER=managerforlustre
+        - export PROJECT=manager-for-lustre-devel
+        - export PACKAGE=python3-iml-common
+        - export SPEC=python-iml-common.spec
+        - docker run -it -e OWNER="$OWNER" -e PROJECT="$PROJECT" -e PACKAGE="$PACKAGE" -e SPEC="$SPEC" -e KEY="$encrypted_253525cedcf6_key" -e IV="$encrypted_253525cedcf6_iv" -v $(pwd):/build:rw imlteam/copr
+    - stage: deploy-pypi
+      name: "PyPi deploy"
+      script: skip
+      deploy:
+        provider: pypi
+        user: iml
+        password:
+          secure: iQ657CWtGaweT0I+zD379ahWWTWQTAtOX59c9EGDDPQ2GvIRnL0qR9NhRKf1kFx0rja1U0rumGio6B6mVU4TY19KHcGa6/6VAZcklXeJ1NmkdDahDZxKchvv9zovQuqf1LaMHhbqkCKo8csOeCToL+lF7QeOKjBOvzUB/a2i+zSREkpLlT7DrHIwyRLZe4626g5ZPz6m1C7VCG599MEnpe6aqgcj04Vcn09cP88GleHWL98OIhyuuJanaRdxApfYih4ZCFSPwYccH6RLSkevYsPjjiGtfXIHLaDceL9m4V0qzXtQ5F0f2FgVNkArRkJHE4RXliqsOEOG/AKiHZaLxYqJHuljguAkT3D3mAb29MbkL07SBGwV4eHtW6m3YKPHR1G+ZzCmLHXio9FVGfwG4rRIruOBlnpBral7umFuol14bEsmSgoFFQfG6ouq90M3hy81SDLrJXeb60hXsLlkxEXC6wERL9wgFeiT0sbVdqNI94YQb31/dlVfL/upRbN5qpTTE9nnnnIWyCC+x6yBy4H6KmhKZxkejTvmofzLlvx3t7ySVx9Z6GUEe7XLBsGR2Gak/2X6X+zYOwbysnCXInQlltJrWy0BUFBS4Oz0WhQrP/TDhzU4cTYytVnxNCtGJXG/UA3dg7ZEfnG1QuiY8FlI+zdpZGFoUdurSMq4Tgo=
+        on:
+          all_branches: true
+          distributions: sdist bdist_wheel
+      skip_upload_docs: true
+    - stage: deploy-copr-r5.0
+      name: "Copr 5.0 deploy"
+      script:
         - export OWNER=managerforlustre
         - export PROJECT=manager-for-lustre-5.0
-        - export PACKAGE=python-iml-common1.4
+        - export PACKAGE=python3-iml-common
         - export SPEC=python-iml-common.spec
         - docker run -it -e PROD="true" -e OWNER="$OWNER" -e PROJECT="$PROJECT" -e PACKAGE="$PACKAGE" -e SPEC="$SPEC" -e KEY="$encrypted_253525cedcf6_key" -e IV="$encrypted_253525cedcf6_iv" -v $(pwd):/build:rw imlteam/copr
 stages:

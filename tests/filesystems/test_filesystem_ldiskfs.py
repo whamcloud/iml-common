@@ -1,4 +1,4 @@
-import mock
+from unittest import mock
 
 from iml_common.test.command_capture_testcase import CommandCaptureTestCase, CommandCaptureCommand
 from iml_common.filesystems.filesystem_ldiskfs import FileSystemLdiskfs

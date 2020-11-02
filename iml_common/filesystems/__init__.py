@@ -3,5 +3,5 @@
 # license that can be found in the LICENSE file.
 
 
-import filesystem_ldiskfs
-import filesystem_zfs
+from . import filesystem_ldiskfs
+from . import filesystem_zfs

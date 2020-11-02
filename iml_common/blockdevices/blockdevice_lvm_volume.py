@@ -3,7 +3,7 @@
 # license that can be found in the LICENSE file.
 
 
-from blockdevice_linux import BlockDeviceLinux
+from .blockdevice_linux import BlockDeviceLinux
 from ..lib import shell
 
 

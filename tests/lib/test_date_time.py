@@ -1,7 +1,7 @@
 import datetime
-import mock
+import unittest
+from unittest import mock
 
-from django.utils import unittest
 from iml_common.lib.date_time import IMLDateTime
 from iml_common.lib.date_time import FixedOffset
 from iml_common.lib.date_time import LocalOffset

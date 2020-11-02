@@ -4,12 +4,7 @@
 
 
 import collections
-
-# OrderedDict is part of the collections module in python2.7
-try:
-    from collections import OrderedDict
-except ImportError:
-    from ordereddict import OrderedDict
+from collections import OrderedDict
 
 
 NameValueItem = collections.namedtuple("NameValueItem", ["name", "value"])

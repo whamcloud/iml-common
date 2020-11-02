@@ -9,7 +9,7 @@ import subprocess
 from collections import defaultdict
 from tempfile import mktemp
 
-from blockdevice import BlockDevice
+from .blockdevice import BlockDevice
 from ..lib.shell import Shell
 
 
@@ -240,9 +240,13 @@ class BlockDeviceLinux(BlockDevice):
 
             # FIXME: naive parse: can these lines be quoted/escaped/have spaces?
             for lustre_property, value in [t.split("=") for t in params_re.group(1).split()]:
-                params[lustre_property].extend(
-                    re.split(BlockDeviceLinux.lustre_property_delimiters[lustre_property], value)
-                )
+                delim = BlockDeviceLinux.lustre_property_delimiters[lustre_property]
+
+                if delim == "":
+                    params[lustre_property].extend([value])
+                else:
+                    params[lustre_property].extend(re.split(delim, value))
+
         else:
             params = {}
 

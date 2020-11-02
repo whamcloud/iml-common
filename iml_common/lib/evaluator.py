@@ -10,7 +10,7 @@ binOps = {
     ast.Add: operator.add,
     ast.Sub: operator.sub,
     ast.Mult: operator.mul,
-    ast.Div: operator.div,
+    ast.Div: operator.truediv,
     ast.Mod: operator.mod,
     ast.Eq: operator.eq,
     ast.NotEq: operator.ne,

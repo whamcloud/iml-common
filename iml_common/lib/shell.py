@@ -52,11 +52,11 @@ class BaseShell(object):
         stub this function while retaining the related behaviour of run()
         """
 
-        assert type(arg_list) in [list, str, unicode], "arg list must be list or str :%s" % type(arg_list)
+        assert type(arg_list) in [list, str, bytes], "arg list must be list or str :%s" % type(arg_list)
 
         # Allow simple commands to just be presented as a string. However do not start formatting the string this
         # will be rejected in a code review. If it has args present them as a list.
-        if type(arg_list) in [str, unicode]:
+        if type(arg_list) in [str, bytes]:
             arg_list = arg_list.split()
 
         # Popen has a limit of 2^16 for the output if you use subprocess.PIPE (as we did recently) so use real files so

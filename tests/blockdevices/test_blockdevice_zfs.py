@@ -1,6 +1,6 @@
 import glob
 import re
-import mock
+from unittest import mock
 
 from os import path
 from iml_common.blockdevices.blockdevice_zfs import BlockDeviceZfs
@@ -68,7 +68,7 @@ kernel modules are functioning properly.
         self.patch_init_modules = mock.patch.object(BlockDeviceZfs, "_check_module")
         self.patch_init_modules.start()
         self.mock_open = mock.mock_open()
-        mock.patch("__builtin__.open", self.mock_open, create=True).start()
+        mock.patch("builtins.open", self.mock_open, create=True).start()
 
         self.blockdevice = BlockDeviceZfs("zfs", self.pool_name)
 

@@ -3,11 +3,11 @@
 # license that can be found in the LICENSE file.
 
 
-import mock
+from unittest import mock
 import errno
 
 from iml_common.lib.shell import Shell
-from iml_unit_testcase import ImlUnitTestCase
+from .iml_unit_testcase import ImlUnitTestCase
 
 
 class CommandCaptureCommand(object):
@@ -37,11 +37,11 @@ class CommandCaptureTestCase(ImlUnitTestCase):
         mock.patch("iml_common.lib.shell.BaseShell.run", self._fake_run).start()
 
     def _fake_run(self, arg_list, logger=None, monitor_func=None, timeout=Shell.SHELLTIMEOUT, shell=False):
-        assert type(arg_list) in [list, str, unicode], "arg list must be list or str :%s" % type(arg_list)
+        assert type(arg_list) in [list, str, bytes], "arg list must be list or str :%s" % type(arg_list)
 
         # Allow simple commands to just be presented as a string. However do not start formatting the string this
         # will be rejected in a code review. If it has args present them as a list.
-        if type(arg_list) in [str, unicode]:
+        if type(arg_list) in [str, bytes]:
             arg_list = arg_list.split()
 
         args = tuple(arg_list)

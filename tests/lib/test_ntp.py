@@ -1,5 +1,5 @@
-import mock
-from django.utils import unittest
+import unittest
+from unittest import mock
 from iml_common.lib.ntp import NTPConfig
 
 
@@ -23,7 +23,7 @@ class TestNTPConfig(unittest.TestCase):
         # each time we run _reset_and_read_conf, config file edits are removed and config reset
         self.mock_open = mock.mock_open()
         self.mock_open.return_value.readlines.return_value = self._get_lines("IML")
-        mock.patch("__builtin__.open", self.mock_open, create=True).start()
+        mock.patch("builtins.open", self.mock_open, create=True).start()
 
         mock.patch.object(self.ntp, "_write_conf", return_value=None).start()
 
